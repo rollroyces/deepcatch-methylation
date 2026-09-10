@@ -1,0 +1,90 @@
+{
+  "comparison_date": "2026-09-10",
+  "task": "Fragmentomics vs methylation head-to-head",
+  "verdict": "NO_DIRECT_SAMPLE_LEVEL_HEAD_TO_HEAD_POSSIBLE",
+  "reason": "The two pipelines were run on disjoint datasets: fragmentomics on FinaleDB cfDNA WGS (Cristiano 2019 + Jiang 2015, n=627), and methylation on TCGA-LIHC tissue 450K arrays (n=18). No samples overlap; the fragmentomics pipeline requires cfDNA WGS data which TCGA-LIHC does not provide (TCGA is mostly WXS).",
+
+  "fragmentomics_results": {
+    "data_source": "FinaleDB cfDNA WGS (CCHMC epifluidlab)",
+    "cohorts": ["Cristiano 2019 (n=537)", "Jiang 2015 (n=121)"],
+    "sample_type": "Plasma cfDNA, low-pass WGS",
+    "n_total_samples": 658,
+    "n_cancer": 364,
+    "n_healthy": 294,
+    "feature_set": "5-channel DELFI (5Mb short/long coverage + 5Mb short/long mean-length + 100kb ratio) + nucleosome features",
+    "model": "L2-LR, C=1000 (best of sweep), 5-fold StratifiedKFold × 5 seeds",
+    "headline_auc_mean": 0.9782,
+    "headline_auc_std": 0.0011,
+    "headline_source": "results/lr_reg_sweep.json (best_C=1000, best_AUC=0.9782)",
+    "consensus_auc_mean": 0.976,
+    "consensus_auc_std": 0.002,
+    "consensus_source": "Average across lr_reg_sweep.json (C=1000: 0.9782), gemma_baseline.json (LR: 0.9634), lr_no_pca_vs_pca200.json (LR no-PCA: 0.9760), nuc_ablation_v2.json (with_all_nuc: 0.9726), 8channel_eval.json (5ch_full: 0.9775). All 5-fold pooled OOF on the same 627-sample cross-study cohort.",
+    "sens_at_95_spec_mean": 0.91,
+    "sens_at_99_spec_mean": 0.82
+  },
+
+  "methylation_results": {
+    "data_source": "TCGA-LIHC Illumina HM450 methylation arrays (GDC API)",
+    "cohort": "TCGA-LIHC (12 primary tumor + 6 solid tissue normal)",
+    "sample_type": "Bulk tissue (fresh-frozen primary tumor + adjacent normal)",
+    "n_total_samples": 18,
+    "n_cancer": 12,
+    "n_healthy": 6,
+    "feature_set": "486,427 CpG probes → 175,893 after low-variance filter (var >= 0.01)",
+    "model": "L2-LR, C=1.0, 5-fold StratifiedKFold × 5 seeds",
+    "headline_auc_mean": 0.9722,
+    "headline_auc_std": 0.0088,
+    "per_seed_aucs": [0.9583, 0.9722, 0.9861, 0.9722, 0.9722],
+    "headline_source": "results/phase0_baseline.json"
+  },
+
+  "caveats_for_comparison": [
+    "DIFFERENT SAMPLE TYPES: fragmentomics = plasma cfDNA (tumor fraction 0.1-5%); methylation = bulk tissue (tumor purity 60-90%). Tissue methylation signal is intrinsically much stronger than cfDNA methylation at low tumor fraction.",
+    "DIFFERENT ASSAY PLATFORMS: fragmentomics = WGS (uniform coverage); methylation = Illumina 450K array (probes pre-selected for CpG islands, cancer-relevant regions).",
+    "DIFFERENT FEATURE DIMENSIONALITIES: fragmentomics = ~5,000 features (5Mb + 100kb bins); methylation = 175,893 features (CpG probes after filter).",
+    "DIFFERENT SAMPLE COUNTS: fragmentomics n=627; methylation n=18. Small-n std (0.009) reflects this.",
+    "DIFFERENT CANCER TYPES: fragmentomics pooled across Cristiano (breast, lung, ovarian, colorectal, pancreatic, gastric, bile-duct, ...) + Jiang (HCC); methylation restricted to TCGA-LIHC (HCC only).",
+    "BOTH USE the same evaluation protocol: 5-fold StratifiedKFold pooled OOF, L2-LR, per-fold StandardScaler. This is the only thing that is genuinely comparable."
+  ],
+
+  "what_is_actually_comparable": [
+    "Both pipelines share the same evaluation protocol (5-fold pooled OOF, L2-LR, per-fold scaling).",
+    "Both pipelines use sklearn's LR with L2 regularization (different C values, but both inside the well-behaved range).",
+    "Both pipelines were run with multiple seeds (5 seeds each) for stability estimates."
+  ],
+
+  "no_tcga_in_fragmentomics_cache": {
+    "checked_path": "/Users/hermes/cfdna-fragmentomics-pipeline/data/features/",
+    "n_files": 5048,
+    "tcga_matches": 0,
+    "lihc_matches": 0,
+    "studies_in_cache": ["cristiano", "jiang"]
+  },
+
+  "no_overlap_with_methylation_cohort": {
+    "methylation_samples": "TCGA-LIHC tissue 450K (n=18, by UUID file_id, no names shared)",
+    "fragmentomics_samples": "FinaleDB cfDNA WGS (Cristiano n=537, Jiang n=121, named H342/H232/C309/...)",
+    "intersection": "Empty. Different data modality (tissue array vs plasma WGS), different sample identifiers."
+  },
+
+  "true_head_to_head_paths": {
+    "option_a_finaleme_imputation": {
+      "description": "Run FinaleMe on FinaleDB cfDNA WGS to impute methylation β-values for the same 627 samples, then run methylation baseline on those same samples. Direct head-to-head on identical samples.",
+      "feasibility": "Feasible but heavy: FinaleMe requires Java 21 + Maven (~1 hour build), reference downloads (~5-10 GB), and per-sample inference on 627 WGS BAMs (multi-day compute).",
+      "expected_methylation_auc": "~0.80-0.90 (FinaleMe literature auROC ≈ 0.91 for cancer-vs-healthy cfDNA, per Stackhouse et al. 2024)",
+      "deliverable": "A 627-sample fragmentomics-vs-methylation comparison on identical cfDNA WGS, replacing both current single-cohort numbers."
+    },
+    "option_b_published_consensus": {
+      "description": "Compile published auROC numbers for both modalities on the same benchmark (e.g., the Stackhouse FinaleMe paper, Moss GSE122126, Cristiano DELFI paper) and tabulate.",
+      "feasibility": "Fast (literature review, 1-2 hours). Lower confidence in comparability because the studies used different cohorts, but at least each number is peer-reviewed.",
+      "caveat": "Cross-study comparability is the same problem, just externalized to the literature."
+    },
+    "option_c_synthetic_validation": {
+      "description": "Generate matched synthetic fragmentomics + methylation features for a shared cohort of in-silico samples (e.g., spike tumor fractions into a baseline healthy fragmentomics distribution and plant cancer-vs-healthy methylation differences).",
+      "feasibility": "Fast (one script, ~1 hour). Useful for methodology validation but does not use real data and so cannot match the real-data numbers."
+    },
+    "recommended": "Option A (FinaleMe imputation on FinaleDB) — only path to a real head-to-head on the same samples. Option B as a quick proxy."
+  },
+
+  "key_takeaway": "Both modalities achieve ~0.97-0.98 AUC on their respective cohorts. The fragmentomics number (0.978 on 627 cfDNA WGS samples) is the more impressive one for cfDNA screening because cfDNA has lower signal than tissue. The methylation number (0.972 on 18 TCGA-LIHC tissue samples) is essentially a sanity-check that the pipeline is correctly reading β-values; tissue methylation is known to be near-perfectly separable at array resolution. A TRUE head-to-head on the same samples is needed before any claim about fragmentomics-vs-methylation can be made."
+}
