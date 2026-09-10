@@ -1,0 +1,331 @@
+{
+  "data_source": "GDC API methylation \u03b2-values",
+  "cancer_types": [
+    "TCGA-LUAD",
+    "TCGA-BRCA",
+    "TCGA-COAD",
+    "TCGA-PAAD",
+    "TCGA-LIHC"
+  ],
+  "n_samples_per_project": {
+    "TCGA-LUAD": 15,
+    "TCGA-BRCA": 15,
+    "TCGA-COAD": 15,
+    "TCGA-PAAD": 15,
+    "TCGA-LIHC": 18
+  },
+  "n_tumor_per_project": {
+    "TCGA-LUAD": 10,
+    "TCGA-BRCA": 10,
+    "TCGA-COAD": 10,
+    "TCGA-PAAD": 10,
+    "TCGA-LIHC": 12
+  },
+  "n_normal_per_project": {
+    "TCGA-LUAD": 5,
+    "TCGA-BRCA": 5,
+    "TCGA-COAD": 5,
+    "TCGA-PAAD": 5,
+    "TCGA-LIHC": 6
+  },
+  "n_probes_total_intersection": 486427,
+  "min_var_threshold": 0.01,
+  "C": 1.0,
+  "n_seeds": 5,
+  "n_splits": 5,
+  "setup_a_per_cancer": {
+    "TCGA-LUAD": {
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_mean": 1.0,
+      "auc_std": 0.0,
+      "n_samples": 15,
+      "n_features": 6272,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_tumor": 10,
+      "n_normal": 5
+    },
+    "TCGA-BRCA": {
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_mean": 1.0,
+      "auc_std": 0.0,
+      "n_samples": 15,
+      "n_features": 8415,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_tumor": 10,
+      "n_normal": 5
+    },
+    "TCGA-COAD": {
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_mean": 1.0,
+      "auc_std": 0.0,
+      "n_samples": 15,
+      "n_features": 8276,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_tumor": 10,
+      "n_normal": 5
+    },
+    "TCGA-PAAD": {
+      "aucs": [
+        0.92,
+        0.9400000000000001,
+        0.92,
+        0.9,
+        0.9
+      ],
+      "auc_mean": 0.916,
+      "auc_std": 0.014966629547095779,
+      "n_samples": 15,
+      "n_features": 136418,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_tumor": 10,
+      "n_normal": 5
+    },
+    "TCGA-LIHC": {
+      "aucs": [
+        0.9583333333333333,
+        0.9722222222222223,
+        0.9861111111111112,
+        0.9722222222222223,
+        0.9722222222222223
+      ],
+      "auc_mean": 0.9722222222222223,
+      "auc_std": 0.00878410461157887,
+      "n_samples": 18,
+      "n_features": 175893,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_tumor": 12,
+      "n_normal": 6
+    }
+  },
+  "setup_b_pooled": {
+    "aucs": [
+      0.9800295857988166,
+      0.9763313609467457,
+      0.9726331360946745,
+      0.9785502958579881,
+      0.9815088757396451
+    ],
+    "auc_mean": 0.9778106508875741,
+    "auc_std": 0.0031029847578998935,
+    "n_samples": 78,
+    "n_features": 9556,
+    "n_seeds": 5,
+    "C": 1.0,
+    "n_tumor": 52,
+    "n_normal": 26
+  },
+  "setup_c_tissue_of_origin": {
+    "pairwise": {
+      "TCGA-LUAD_vs_TCGA-BRCA": {
+        "aucs": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "auc_mean": 1.0,
+        "auc_std": 0.0,
+        "n_samples": 20,
+        "n_features": 9434,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-LUAD_vs_TCGA-COAD": {
+        "aucs": [
+          0.98,
+          0.97,
+          0.97,
+          0.99,
+          0.98
+        ],
+        "auc_mean": 0.9780000000000001,
+        "auc_std": 0.007483314773547889,
+        "n_samples": 20,
+        "n_features": 9342,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-LUAD_vs_TCGA-PAAD": {
+        "aucs": [
+          0.9,
+          0.91,
+          0.91,
+          0.9,
+          0.92
+        ],
+        "auc_mean": 0.908,
+        "auc_std": 0.007483314773547889,
+        "n_samples": 20,
+        "n_features": 167434,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-LUAD_vs_TCGA-LIHC": {
+        "aucs": [
+          0.975,
+          0.9666666666666667,
+          0.9375,
+          0.9833333333333333,
+          0.9916666666666666
+        ],
+        "auc_mean": 0.9708333333333332,
+        "auc_std": 0.01863389981249822,
+        "n_samples": 22,
+        "n_features": 201690,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 12
+      },
+      "TCGA-BRCA_vs_TCGA-COAD": {
+        "aucs": [
+          0.99,
+          1.0,
+          0.99,
+          0.98,
+          1.0
+        ],
+        "auc_mean": 0.992,
+        "auc_std": 0.007483314773547889,
+        "n_samples": 20,
+        "n_features": 10388,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-BRCA_vs_TCGA-PAAD": {
+        "aucs": [
+          1.0,
+          0.99,
+          1.0,
+          1.0,
+          0.99
+        ],
+        "auc_mean": 0.9960000000000001,
+        "auc_std": 0.00489897948556636,
+        "n_samples": 20,
+        "n_features": 9515,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-BRCA_vs_TCGA-LIHC": {
+        "aucs": [
+          0.9916666666666666,
+          0.9916666666666666,
+          1.0,
+          0.9916666666666666,
+          1.0
+        ],
+        "auc_mean": 0.9949999999999999,
+        "auc_std": 0.0040824829046386705,
+        "n_samples": 22,
+        "n_features": 10612,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 12
+      },
+      "TCGA-COAD_vs_TCGA-PAAD": {
+        "aucs": [
+          0.9800000000000001,
+          0.99,
+          1.0,
+          0.99,
+          0.97
+        ],
+        "auc_mean": 0.986,
+        "auc_std": 0.010198039027185565,
+        "n_samples": 20,
+        "n_features": 9526,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 10
+      },
+      "TCGA-COAD_vs_TCGA-LIHC": {
+        "aucs": [
+          0.9916666666666666,
+          0.9916666666666666,
+          0.9916666666666666,
+          1.0,
+          0.9916666666666666
+        ],
+        "auc_mean": 0.9933333333333332,
+        "auc_std": 0.003333333333333366,
+        "n_samples": 22,
+        "n_features": 10680,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 12
+      },
+      "TCGA-PAAD_vs_TCGA-LIHC": {
+        "aucs": [
+          0.95,
+          0.9333333333333333,
+          0.95,
+          0.8666666666666667,
+          0.8875000000000001
+        ],
+        "auc_mean": 0.9174999999999999,
+        "auc_std": 0.03419714088113862,
+        "n_samples": 22,
+        "n_features": 197431,
+        "n_seeds": 5,
+        "C": 1.0,
+        "n_class_pos": 10,
+        "n_class_neg": 12
+      }
+    },
+    "ovr_TCGA-LUAD_vs_rest": {
+      "aucs": [
+        0.9880952380952381,
+        1.0,
+        1.0,
+        0.9952380952380951,
+        0.9952380952380951
+      ],
+      "auc_mean": 0.9957142857142858,
+      "auc_std": 0.004364357804719837,
+      "n_samples": 52,
+      "n_features": 10453,
+      "n_seeds": 5,
+      "C": 1.0,
+      "n_class_pos": 10,
+      "n_class_neg": 42
+    }
+  }
+}
