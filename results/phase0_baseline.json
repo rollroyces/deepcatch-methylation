@@ -1,0 +1,20 @@
+{
+  "aucs": [
+    0.9583333333333333,
+    0.9722222222222223,
+    0.9861111111111112,
+    0.9722222222222223,
+    0.9722222222222223
+  ],
+  "auc_mean": 0.9722222222222223,
+  "auc_std": 0.00878410461157887,
+  "n_samples": 18,
+  "n_features": 175893,
+  "n_seeds": 5,
+  "C": 1.0,
+  "cohort": "TCGA-LIHC (12 tumor + 6 normal)",
+  "data_source": "GDC API methylation \u03b2-values",
+  "n_probes_total": 486427,
+  "n_probes_after_filter": 175893,
+  "min_var_threshold": 0.01
+}
