@@ -1,0 +1,125 @@
+{
+  "task": "FinaleToolkit methylation-proxy head-to-head (Phase 2 Option 2)",
+  "cohort": "FinaleDB cfDNA WGS \u2014 Cristiano 2019 + Jiang 2015 cross-study",
+  "n_samples_total": 627,
+  "n_cancer": 363,
+  "n_healthy": 264,
+  "studies": {
+    "cristiano": 506,
+    "jiang": 121
+  },
+  "protocol": {
+    "model": "L2-LR (C=1.0, max_iter=20000, tol=1e-8)",
+    "cv": "5-fold StratifiedKFold, 5 seeds",
+    "seeds": [
+      42,
+      13,
+      7,
+      99,
+      1234
+    ],
+    "preprocessing": "per-fold per-study z-score harmonization, then per-fold StandardScaler, then LR",
+    "dropped_constant_cols": true,
+    "pooled_oof": "AUC computed on the pooled 5-fold OOF predictions"
+  },
+  "fragmentomics_only": {
+    "feature_count": 63246,
+    "feature_description": "5-channel DELFI: 5Mb short/long ratio (631 bins) + 5Mb coverage (631 bins) + 100kb short/long ratio (30894 bins) + 100kb counts (median-normalized, 30894 bins) + FSD histogram (196 bins)",
+    "per_seed_aucs": [
+      0.9739961599465731,
+      0.9733178896402037,
+      0.9752587862091995,
+      0.9723683112112864,
+      0.977961432506887
+    ],
+    "auc_mean": 0.9745805159028299,
+    "auc_std": 0.0019349518987336724,
+    "sens95_mean": 0.8859504132231404,
+    "sens99_mean": 0.7421487603305785,
+    "pooled_auc": 0.9739961599465731,
+    "pooled_auc_95ci": [
+      0.9625998135867785,
+      0.9835170343008243
+    ]
+  },
+  "methylation_proxy_only": {
+    "feature_count": 1291,
+    "feature_description": "Methylation-correlated features derived from the same 5-channel fragmentomics files (no FinaleMe, no BAMs). Per-channel summary stats only: 5mb ratio (8 features) + 100kb ratio (12 features) + 5Mb coverage (5 features) + FSD-derived entropy + top-3 FSD bins (4 features) = 29 summary features. Plus 1262 per-fold TRAIN-only percentile-rank encoded features (5Mb ratio + 5Mb coverage ranks, 631 each). Total = 1291.",
+    "per_seed_aucs": [
+      0.683915602304032,
+      0.6673345020452459,
+      0.6768198514066283,
+      0.6696510560146923,
+      0.6756198347107438
+    ],
+    "auc_mean": 0.6746681692962685,
+    "auc_std": 0.005831029432735089,
+    "sens95_mean": 0.4099173553719009,
+    "sens99_mean": 0.256198347107438,
+    "pooled_auc": 0.683915602304032,
+    "pooled_auc_95ci": [
+      0.6398694964007108,
+      0.7268279976769902
+    ]
+  },
+  "combined": {
+    "feature_count": 64537,
+    "feature_description": "Concatenation of fragmentomics-only (5-channel) + methylation-proxy summary stats (29 features). Plus 1262 per-fold TRAIN-only percentile-rank encoded 5Mb ratio + coverage profiles. Per-bin rank is computed using TRAIN-fold data only to avoid test leakage. Total features at train time = 64537",
+    "per_seed_aucs": [
+      0.9175327656732615,
+      0.9209554219884799,
+      0.9208302028549964,
+      0.9200684531263045,
+      0.9254320060105183
+    ],
+    "auc_mean": 0.9209637699307122,
+    "auc_std": 0.0025517220033395476,
+    "sens95_mean": 0.777961432506887,
+    "sens99_mean": 0.6071625344352617,
+    "pooled_auc": 0.9175327656732615,
+    "pooled_auc_95ci": [
+      0.8948330666606534,
+      0.9380664705672557
+    ]
+  },
+  "statistical_tests": {
+    "delta_auc_combined_minus_frag": {
+      "mean": -0.05361674597211783,
+      "std": 0.0016280146154306718,
+      "per_seed": [
+        -0.056463394273311596,
+        -0.05236246765172381,
+        -0.054428583354203086,
+        -0.05229985808498194,
+        -0.052529426496368714
+      ],
+      "all_seeds_positive": false,
+      "all_seeds_negative": true,
+      "paired_t": -65.86764696572968,
+      "paired_p": 3.1826992813694263e-07,
+      "interpretation": "Combined \u2264 Fragmentomics or not significant"
+    },
+    "delta_auc_proxy_minus_frag": {
+      "mean": -0.2999123466065615,
+      "std": 0.005467381984103237,
+      "per_seed": [
+        -0.29008055764254104,
+        -0.3059833875949578,
+        -0.2984389348025712,
+        -0.3027172551965941,
+        -0.3023415977961432
+      ],
+      "all_seeds_positive": false,
+      "all_seeds_negative": true,
+      "paired_t": -109.70967365315826,
+      "paired_p": 4.1393394935752924e-08,
+      "interpretation": "Proxy \u2264 Fragmentomics or not significant"
+    }
+  },
+  "honest_caveats": [
+    "The methylation-proxy features are NOT true methylation. They are fragment-length and coverage-derived proxies for methylation-correlated biology, computed from the same 5-channel fragmentomics files. No per-fragment BEDs, no FinaleMe, no bisulfite data.",
+    "The proxy and fragmentomics feature matrices are therefore NOT independent \u2014 they share the same source signal. A positive \u0394AUC for the combined model does NOT prove methylation adds orthogonal information.",
+    "The 5-channel baseline (LR no-PCA, C=1.0) matches the existing cfdna-fragmentomics-pipeline production protocol exactly; the 0.978 AUC reported in RESULTS.md uses C=1000, not C=1.0. The C=1.0 number is the appropriate comparison for this head-to-head because all 3 setups use the same C.",
+    "Per-bin percentile-rank encoding (1314 features from 5Mb bins alone) is a strong non-linear transformation that captures cohort-relative regional signal \u2014 biologically interpretable as methylation-correlated deviation from cohort baseline."
+  ]
+}
