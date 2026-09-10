@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from methylation.methylation_baseline import build_feature_matrix, evaluate_cv
 
@@ -63,7 +62,6 @@ def test_evaluate_cv_random_labels_is_at_chance():
 
 def test_evaluate_cv_handles_perfect_separation():
     """If features perfectly separate classes, AUC should be ~1.0."""
-    rng = np.random.RandomState(0)
     X = np.zeros((60, 5), dtype=np.float32)
     y = np.zeros(60, dtype=np.int32)
     X[:30, 0] = 1.0
