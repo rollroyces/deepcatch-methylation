@@ -1,0 +1,19 @@
+# Data is gitignored — must be downloaded separately
+data/raw/
+data/processed/
+data/cache/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Local config
+.env
+*.local

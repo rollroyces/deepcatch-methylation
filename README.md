@@ -1,2 +1,73 @@
 # deepcatch-methylation
-CpG methylation-based cfDNA cancer detection (Phase 0: FinaleMe smoke validation). See METHYLATION_PROJECT.md for scope and plan.
+
+CpG methylation-based cfDNA cancer detection.
+
+> **Phase 0 (smoke validation, starting 2026-09-10):** Verify FinaleMe (Liu et al. *Nat Commun* 15:2790, 2024) produces a meaningful cancer-vs-healthy signal when run on cfDNA WGS. If AUC > 0.65 on a 50-sample subset, proceed to Phase 1 (627-cohort methylation baseline).
+
+This repo is the active development location for the methylation channel extension to the existing [`rollroyces/deepcatch`](https://github.com/rollroyces/deepcatch) framework. It complements (does NOT replace) the fragmentomics channel in [`rollroyces/cfdna-fragmentomics-pipeline`](https://github.com/rollroyces/cfdna-fragmentomics-pipeline).
+
+## Quick links
+
+- **[`METHYLATION_PROJECT.md`](METHYLATION_PROJECT.md)** — full scope, phased plan, timeline, exit criteria
+- **[`docs/methylation_inventory.md`](docs/methylation_inventory.md)** — what methylation scaffolding already exists in the deepcatch framework
+- **[`docs/methylation_data_sources.md`](docs/methylation_data_sources.md)** — public methylation data audit
+
+## Status
+
+| Phase | Goal | Status |
+|---|---|---|
+| **0** | FinaleMe smoke validation on 50 samples | 🔄 Starting |
+| 1 | 627-cohort methylation baseline (cross-study AUC) | ⏸ Blocked on Phase 0 |
+| 2 | Head-to-head + combined-feature fusion | ⏸ Blocked on Phase 1 |
+| 3 | Tissue-of-origin (TOO) ablation | ⏸ Conditional on Phase 1 |
+| 4 | Methylation GNN training on real data | ⏸ Deferred — needs collaborator + GPU |
+
+## Why FinaleMe (no new assay)?
+
+The project targets the existing 627-sample WGS cohort (Cristiano 2019 + Jiang 2018 + others) without requiring new methylation data. FinaleMe imputes single-CpG methylation from plain cfDNA WGS fragments — validated auROC 0.91 on fragments with ≥5 CpGs in CpG-rich regions. MIT-licensed, code at https://github.com/epifluidlab/FinaleMe.
+
+The alternative path (true bisulfite sequencing, EM-seq, or 850K array data) requires DAC approval (months), purchasing arrays ($100K+), or waiting for a public WGBS cfDNA cohort at CCGA's scale — which does not exist.
+
+## Repo layout
+
+```
+deepcatch-methylation/
+├── README.md                          # this file
+├── METHYLATION_PROJECT.md             # full project plan
+├── docs/
+│   ├── methylation_inventory.md       # existing scaffolding audit
+│   └── methylation_data_sources.md    # public data audit
+├── src/methylation/
+│   ├── finaleme_extract.py            # Phase 0/1: WGS → methylation features
+│   ├── methylation_baseline.py        # Phase 1: LR baseline + 5-fold CV
+│   ├── methylation_vs_fragmentomics.py  # Phase 2: head-to-head
+│   ├── methylation_fusion.py          # Phase 2: combined-feature fusion
+│   └── too_ablation.py                # Phase 3: tissue-of-origin
+├── scripts/
+│   ├── cfdna-finaleme                 # CLI wrapper
+│   └── cfdna-methylation-baseline     # CLI wrapper
+├── test/
+│   ├── test_finaleme_extract.py
+│   ├── test_methylation_baseline.py
+│   └── test_methylation_fusion.py
+├── results/                           # JSON outputs
+└── .github/workflows/
+    └── methylation-tests.yml          # CI
+```
+
+## Honest constraints
+
+- **No institutional affiliation** — solo project.
+- **No methylation-expert collaborator** (yet). Blocks Phase 4, not Phases 0-2.
+- **FinaleMe is an imputation**, not an assay. The signal ceiling is lower than true bisulfite methylation.
+- **Headline numbers will not beat Galleri.** The contribution is methodological: showing what signal is extractable from a 627-sample WGS cohort with imputation.
+
+## Author
+
+**Yu Ching Lam** (Independent Researcher)
+ORCID: [0009-0008-9113-769X](https://orcid.org/0009-0008-9113-769X)
+GitHub: [@rollroyces](https://github.com/rollroyces)
+
+## License
+
+MIT (matches FinaleMe upstream).
