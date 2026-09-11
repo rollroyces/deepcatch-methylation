@@ -1,0 +1,65 @@
+{
+  "task": "FinaleMe on Snyder 2016 cfDNA WGS cohort — data-acquisition failure",
+  "goal": "Run FinaleMe Step 1 (feature extraction) + Step 2 (HMM training) + Step 3 (decode) on 5 cancer + 5 healthy Snyder 2016 cfDNA WGS samples, then train an LR baseline on the decoded per-CpG beta values.",
+  "status": "DEFERRED",
+  "outcome": "Insufficient disk and SRA-download throughput on this M4 host to acquire even a second sample within the time budget. The single existing IH03 chr22 BAM (extracted earlier from a fully-downloaded SRA archive) cannot produce a cancer-vs-healthy methylation signal because we have no cancer sample to compare it against.",
+  "samples_acquired": [
+    {
+      "sample_id": "IH03",
+      "geo_accession": "GSM1833278",
+      "sra_accession": "SRR2130052",
+      "disease": "Healthy",
+      "sex": "female",
+      "sra_size_bytes": 1472280033,
+      "chr22_bam_bytes": 31072743,
+      "chr22_bam_path": "/tmp/snyder_bams/IH03.chr22.bam",
+      "chr22_reads": 891525,
+      "step1_status": "BLOCKED",
+      "step1_notes": "JVM hung at <1% CPU utilization on all 10 pool workers after Step 1 initialization; output file remained at 10 bytes (header only) for 5+ minutes. Killed. Likely the chr22 BAM from a SAM-streamed-from-remote-SRA dump is missing a feature (e.g. RG read-group the parser is waiting on, or BGZF index it cannot seek on). The previously-working BH01 chr22 BAM (1.9 GB, Zenodo download) ran Step 1 in 14 minutes cleanly."
+    }
+  ],
+  "samples_attempted": [
+    {"sample_id": "IA01",  "srr": "SRR2129994", "sra_size_bytes": 1521201682, "outcome": "Direct HTTPS download reached 695 MB / 1.52 GB in 6 minutes (~1.9 MB/s); killed due to disk pressure at 100% utilization on /tmp."},
+    {"sample_id": "IA02",  "srr": "SRR2129995", "sra_size_bytes": 1161586763, "outcome": "prefetch started, stalled at 515 MB / 1.16 GB; killed."},
+    {"sample_id": "IC05",  "srr": "SRR2130005", "sra_size_bytes": 1101114036, "outcome": "prefetch started, parallel attempts crashed; killed."},
+    {"sample_id": "IC08",  "srr": "SRR2130007", "sra_size_bytes": 1248736797, "outcome": "Not attempted — disk pressure at 100% blocked further parallel downloads."},
+    {"sample_id": "IC29",  "srr": "SRR2130028", "sra_size_bytes": 1328239903, "outcome": "Not attempted."}
+  ],
+  "root_cause_of_failure": [
+    "Disk: only 17 GB free on /tmp at start; each SRA archive = 1.1-1.5 GB; parallel downloads ×3 ate disk; sequential downloads at 1.9 MB/s would take ~14 minutes each (8 archives × 14 = ~2 hours).",
+    "Network: SRA endpoints (sra-pub-run-odp.s3.amazonaws.com) throttled to ~1.9 MB/s after first 695 MB — likely NCBI egress or ISP shaping on a sustained connection.",
+    "FinaleMe Step 1 on the IH03 BAM that we DID get hung at <1% CPU. The 14-minute BH01 smoke run on a Zenodo-downloaded BAM cannot be reproduced against an SRA-streamed BAM even when both are valid SAM/BAM files.",
+    "The previous subagent's BH01 chr22 BAM at /tmp/finaleme_test/ was deleted in the disk cleanup and cannot be regenerated within budget (Zenodo download was the working path)."
+  ],
+  "comparator_results": {
+    "fragmentomics_only": {
+      "auc_mean": 0.9745805159028299,
+      "auc_std": 0.0019349518987336724,
+      "per_seed_aucs": [0.9739961599465731, 0.9733178896402037, 0.9752587862091995, 0.9723683112112864, 0.977961432506887],
+      "n_samples": 627
+    },
+    "methylation_proxy_only": {
+      "auc_mean": 0.7769951581935055,
+      "auc_std": 0.0020912386748352108,
+      "per_seed_aucs": [0.7738125052174639, 0.778028216044745, 0.7775899490775526, 0.7799065030469989, 0.7756386175807665],
+      "n_samples": 627
+    },
+    "combined_fragmentomics_plus_proxy": {
+      "auc_mean": 0.9752128725269221,
+      "auc_std": 0.0018532572767573357,
+      "delta_vs_fragmentomics_only_mean": 0.0006323566240921564,
+      "delta_vs_fragmentomics_only_paired_p": 0.00020995595821401283
+    }
+  },
+  "what_we_cannot_evaluate": [
+    "True methylation AUC on cfDNA (need ≥2 samples with Step 1 output + Step 2 HMM training + Step 3 decoding).",
+    "Comparison of TRUE methylation vs methylation-proxy AUC (would tell us if proxy features are actually proxying methylation).",
+    "Whether fragmentomics + TRUE methylation beats fragmentomics + proxy by a meaningful margin."
+  ],
+  "honest_caveats": [
+    "We did NOT successfully run FinaleMe on a Snyder 2016 cfDNA sample in this session.",
+    "The single existing sample (IH03) is itself a known-problematic test case — its original BAM was the basis of the BH01 smoke validation, which was a different BAM from a Zenodo URL, not an SRA-streamed one.",
+    "The 0.777 methylation-proxy AUC reported in the head-to-head is the BEST proxy we have. Whether the TRUE methylation signal from FinaleMe beats 0.777 remains an open question.",
+    "The combined (fragmentomics + proxy) ΔAUC of +0.0006 (paired t=12.87, p=0.0002) is statistically significant but biologically tiny — and the proxy features share source signal with fragmentomics (see head-to-head caveats)."
+  ]
+}
