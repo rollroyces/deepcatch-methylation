@@ -2,6 +2,8 @@
 data/raw/
 data/processed/
 data/cache/
+results/finaleme_tabix/
+results/*.bed.gz
 
 # Python
 __pycache__/
