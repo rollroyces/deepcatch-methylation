@@ -51,10 +51,22 @@ The Zenodo record was deposited in Oct 2024 by the FinaleMe team, presumably wit
 ## What was actually accomplished
 
 - ✅ Step 1 (CpG feature matrix) works reliably in tabix mode on the M4 with -Xmx8G, runtime ~13 min/sample
+- ✅ Step 3 with v0.61 JAR successfully parses the input feature file (17,398,663 features with FragLen, Norm_Frag_cov, DistToCenter), then fails to deserialize the pretrained HMM due to package mismatch
 - ✅ Pretrained models exist and are downloadable from Zenodo
 - ❌ Pretrained models cannot be loaded by current FinaleMe v0.61 due to package mismatch
-- ❌ v0.58.1 alternative JAR OOMs at -Xmx8G and has different package structure
+- ❌ v0.58.1 alternative JAR OOMs at -Xmx8G trying to load the full feature matrix in memory (no streaming support in old version)
 - ❌ Final conclusion: cannot get pretrained model Step 3 working without author assistance
+
+### Diagnostic detail from v0.61 Step 3 attempt
+
+Just before the `ClassNotFoundException`, the v0.61 Step 3 successfully parsed the BH01 CpG feature matrix:
+```
+09:41:23 INFO - Feature 0 (FragLen): n=17,398,663, min=35.0, max=499.0, mean=219.06 bp, sd=85.26
+09:41:23 INFO - Feature 1 (Norm_Frag_cov): n=17,398,663, min=0.149, max=18.51, mean=11.63, sd=3.36
+09:41:23 INFO - Feature 2 (DistToCenter): n=17,398,663, min=1.0, max=250.0, mean=55.58, sd=39.94
+```
+
+This confirms the Step 1 output is **biologically plausible** (cfDNA-typical fragment lengths, well-scaled coverage, reasonable position distribution) and **format-compatible** with Step 3. The only blocker is the pretrained model package mismatch — if a compatible JAR (or compatible model) were available, the decode would actually run.
 
 ---
 
