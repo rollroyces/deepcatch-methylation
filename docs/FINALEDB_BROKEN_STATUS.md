@@ -94,51 +94,97 @@ The site has been in this state since at least 2026-08 (per Subagent B's earlier
 
 ---
 
-## Workarounds that DON'T work
+## Important follow-up: `/api/v1/misc` is the only working endpoint
 
-| Approach | Why it fails |
+On 2026-09-12, after the initial diagnosis, I probed the API more thoroughly
+and found:
+
+| Endpoint | HTTP | Content-Type | Returns |
+|---|---|---|---|
+| `/api/v1/misc` (and `/*`) | **200** | application/json | `{"s3":"https://s3.us-east-2.amazonaws.com/finaledb.epifluidlab.cchmc.org"}` |
+| `/api/v1/seqrun/*` | 500 | text/html | Internal Server Error |
+| `/api/v1/summary` | 500 | text/html | Internal Server Error |
+| `/api/v1/publication` | 500 | application/json | Internal Server Error |
+| `/api/v1/studies` | 200 | text/html | (SPA fallback) |
+| `/api/v1/files` | 200 | text/html | (SPA fallback) |
+| `/api/v1/health` | 200 | text/html | (SPA fallback) |
+| `/api/v1/version` | 200 | text/html | (SPA fallback) |
+
+**`/api/v1/misc` is the ONLY endpoint that returns valid JSON.** All others either
+500 (DB connection failure) or serve the React SPA HTML.
+
+The `/api/v1/misc` endpoint code (from `routes/misc.js`):
+```js
+const misc = async (req, res, next) => {
+  return res.status(200).json({ s3: process.env.FINALEDB_S3PUBLIC });
+};
+router.get('/*', misc);
+```
+
+It's a catch-all that just returns the S3 base URL from the `FINALEDB_S3PUBLIC`
+env var. **It works because it doesn't touch the database.**
+
+### What this tells us
+
+1. **The web server (Node.js + Express) is running** — it can serve static SPA
+   files and the `/api/v1/misc` route. The process is alive.
+2. **The Postgres connection is broken** — every endpoint that does
+   `SeqRun.findAll()` or `findAndCountAll()` returns 500. This is the real
+   failure mode.
+3. **The S3 bucket is fully private** — even with the bucket name and
+   region confirmed (us-east-2), all S3 access returns 403 AccessDenied.
+4. **There is no way to authenticate** — no login endpoint, no API key,
+   no token system. The site only worked when:
+   - Postgres was up AND
+   - S3 bucket was public
+   Both conditions are now false.
+
+### Why we can't "fix" this from outside
+
+The Postgres credentials are set as 4 environment variables (`FINALEDB_NAME`,
+`FINALEDB_USER`, `FINALEDB_PASSWORD`, `FINALEDB_HOST`) inside the EC2 instance
+hosting FinaleDB. We don't have access to:
+- The EC2 instance (no SSH key)
+- The Postgres database (no credentials)
+- The S3 bucket (no IAM credentials)
+
+Only the FinaleDB operators (Yaping Liu `yaping@northwestern.edu`, Ravi Bandaru
+`ravi.bandaru@northwestern.edu`) can restore the broken pieces.
+
+### What I tried that doesn't work
+
+| Attempt | Result |
 |---|---|
-| Direct API queries (`/api/v1/seqrun`) | Returns 500 |
-| `/data/*` redirect to S3 | S3 returns 403 |
-| Try `https` instead of `http` | SSL cert fails (HTTP 000) |
-| Try `curl` with browser User-Agent | Same 500/403 |
+| Different file keys on S3 (`frag.tsv.gz`, `BH01.frag.bed.gz`, etc.) | All 403 |
+| S3 listing (`?list-type=2`) | 403 AccessDenied |
+| Different S3 endpoints (`s3-us-east-2`, `s3-website-us-east-2`, `bucket.s3.amazonaws.com`) | All 403 / connection refused |
+| POST to `/api/v1/auth/login` | "Cannot POST" (route doesn't accept POST) |
+| Browser navigation | browser session failed (timed out) |
+| Reading SPA bundle JS for auth endpoints | No auth code found; only the `/api/v1/misc` S3 URL |
 
-## Workarounds that MIGHT work
+### The cleanest possible workaround (still requires external help)
 
-1. **Globus endpoint** — the README mentions `68c86914-a133-4e16-963d-028cc5f60cea`. Globus is a separate authentication mechanism that may still work even when the website is broken. Requires Globus account + 1-2 weeks for data access request approval.
+If we can get **ANY** authenticated access to FinaleDB, the data path works:
 
-2. **Email the FinaleDB authors** (Yaping Liu `yaping@northwestern.edu`, Ravi Bandaru `ravi.bandaru@northwestern.edu`) to ask:
-   - Is the EC2 instance still running?
-   - Is the Postgres service down intentionally (cost/maintenance) or is it a bug?
-   - Is there a planned timeline for restoration?
-   - Is there a backup download mechanism for the fragment BEDs?
+1. **Email FinaleDB authors** asking for:
+   - Either: temporary S3 IAM credentials with `s3:GetObject` on the bucket
+   - Or: a Globus-authenticated download URL (the README mentions the
+     Globus endpoint `68c86914-a133-4e16-963d-028cc5f60cea`)
+   - Or: a sample of the raw fragment BEDs from a single study (e.g., all
+     Jiang 2015 fragments) for verification purposes
 
-3. **Use alternative public fragment BEDs** — Snyder 2016 (Zenodo 6914806) has fragment BEDs, but only chr22 and only 1 sample. Other sources of cfDNA fragment data:
-   - DELFI paper supplementary data (Cristiano 2019, Nature 570:385-389) — may have processed features but not raw fragment BEDs
-   - dbGaP phs003287 (the FinaleMe training cohort) — restricted access, requires DAC approval
-   - 1000 Genomes Project — WGS data but not cfDNA
+2. With authenticated S3 access, we can list the bucket and download all 627
+   raw fragment BEDs (~107 GB). Then run cleavage-ratio features locally on M4
+   in ~9 hours wall-clock (per Subagent F's analysis).
 
----
+### Why the methylation project is at a natural pause
 
-## Implication for the methylation project
+We have explored every public-facing access path:
+- Direct API: blocked (Postgres)
+- Direct S3: blocked (private)
+- Browser navigation: blocked (depends on API)
+- Public mirrors: Zenodo CRAG has different cohort, EGA/dbGaP require DAC
 
-**We cannot get the raw fragment BEDs for the 627-sample FinaleDB cohort.** This blocks the cleavage-ratio deep-dive on the multi-sample cohort that Subagent E recommended.
-
-**Alternative paths:**
-1. Use Snyder 2016 chr22 (single sample) as a proof-of-concept only — already done in `docs/CLEAVAGE_RATIO_FEASIBILITY.md`
-2. Email FinaleDB / FinaleMe authors for fragment BED access
-3. Pivot the methylation project to a different data source entirely
-
-**The methylation-proxy result (AUC 0.777, combined +0.0006) on the existing 627-sample aggregated features remains the best honest signal we can produce.**
-
----
-
-## Files for reference
-
-| File | Description |
-|---|---|
-| `server.js` (https://raw.githubusercontent.com/epifluidlab/finaledb_portal/master/server.js) | Express server, route mounting |
-| `db.js` (https://raw.githubusercontent.com/epifluidlab/finaledb_portal/master/db.js) | Sequelize connection (4 env vars) |
-| `routes/seqrun.js` | The 500 source (Sequelize query) |
-| `routes/s3public.js` | The 403 source (S3 redirect) |
-| `routes/publication.js` | Mentioned as "broken since 2023" per Subagent B |
+The only path forward is **author collaboration**. The methylation-proxy
+result (AUC 0.777, combined +0.0006) remains the best honest signal we
+can produce from publicly-accessible data.
