@@ -106,3 +106,58 @@ The honest status: the methylation project is at a natural pause point. We have:
 - Generated a useful null result (methylation-proxy AUC 0.777)
 
 The remaining paths require either author collaboration (1-week turnaround) or alternative data acquisition (multi-month). Neither is appropriate to push on without user input.
+
+---
+
+## Addendum: Why v0.58.1 OOMs at -Xmx8G (root cause analysis)
+
+After the initial findings, I decompiled `processMatrixFile` in `org.cchmc.epifluidlab.finaleme.hmm.FinaleMe` (v0.58.1) using `javap -c` to understand why it OOM'd.
+
+### Root cause: v0.58.1 has no streaming in Step 3
+
+`processMatrixFile` reads the entire feature matrix into memory and builds three nested data structures:
+
+| Data structure | What it stores | Per-row cost |
+|---|---|---|
+| `SummaryStatistics[3]` (accumulator) | Running mean/sd of FragLen, Norm_Frag_cov, DistToCenter | ~120 bytes (3 × Apache Commons Math SummaryStatistics) |
+| `ObservationVector` (per row, line 1760) | Normalized feature vector (3 doubles) | ~80 bytes (header + `double[3]`) |
+| `Triple<chr, start, ObservationVector>` (line 1823) | One entry per row | ~50 bytes (Triple header + 3 references) |
+| `TreeMap<Integer, TreeMap<chr, Triple>>` (line 1812) | Grouped by chrom position | + pointer overhead |
+| `HashMap<chr, TreeMap>` (line 1779) | Per-chromosome index | + hash table overhead |
+
+For BH01 chr22 (17,398,663 features), total heap cost is approximately:
+- Raw data structures: **17.4M × ~250 bytes ≈ 4.35 GB**
+- Plus JVM internals (GC cards, code cache, etc.): ~1 GB
+- Plus OS overhead: ~0.5 GB
+- **Total demand: ~5.85 GB**
+
+With `-Xmx8G`, the JVM has ~7 GB usable heap. After the first few million rows fill the array list (which grows by 50% on each resize), the next `ArrayList.grow()` call fails with `OutOfMemoryError: Java heap space`. The error path:
+```
+java.lang.OutOfMemoryError: Java heap space
+    at java.util.ArrayList.grow(ArrayList.java:239)
+    at java.util.ArrayList.grow(ArrayList.java:244)
+    at java.util.ArrayList.add(ArrayList.java:483)
+    at java.util.ArrayList.add(ArrayList.java:496)
+    at org.cchmc.epifluidlab.finaleme.hmm.FinaleMe.processMatrixFile(FinaleMe.java:600)
+```
+
+### Why v0.61 succeeds where v0.58.1 OOMs
+
+The current v0.61 JAR has `decodeOnlyStreaming(FinaleMe.java:1252)` — note the **Streaming** in the method name. It processes records in chunks rather than loading all 17.4M rows into memory at once. This is why v0.61 successfully parsed the BH01 feature matrix (reporting the 3 SummaryStatistics) but failed at the *next* step (deserializing the pretrained HMM).
+
+### Workaround attempted
+
+Tried `-Xmx12G` on v0.58.1 — JVM immediately OOM-killed by macOS at JVM startup because M4 has only 16 GB unified memory and macOS needs ~2 GB for itself. So `-Xmx8G` is the practical max on this hardware.
+
+Could not increase heap further because:
+- macOS unified memory is 16 GB total
+- The OS needs ~2 GB for system services + active processes
+- Above ~12 GB, JVM startup itself fails (OOM-killed before reaching application code)
+
+### Conclusion
+
+The v0.58.1 OOM is **fundamentally a streaming problem** in the old FinaleMe codebase. The v0.61 release added streaming (the `decodeOnlyStreaming` method) but at the cost of breaking compatibility with the Zenodo-deposited pretrained models (which were serialized with the old in-memory data layout from a third, undocumented version).
+
+**Neither version is usable end-to-end without either:**
+1. Author help to identify the JAR version that produced the Zenodo models
+2. Multi-day compute to retrain a new HMM from scratch using v0.61 streaming
