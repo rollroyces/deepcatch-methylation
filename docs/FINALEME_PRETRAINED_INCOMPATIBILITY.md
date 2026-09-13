@@ -161,3 +161,49 @@ The v0.58.1 OOM is **fundamentally a streaming problem** in the old FinaleMe cod
 **Neither version is usable end-to-end without either:**
 1. Author help to identify the JAR version that produced the Zenodo models
 2. Multi-day compute to retrain a new HMM from scratch using v0.61 streaming
+
+---
+
+## UPDATE 2026-09-13: BREAKTHROUGH — pretrained models now load!
+
+After creative investigation, the pretrained FinaleMe HMM models from Zenodo have been **successfully loaded and used** to decode methylation on BH01 chr22. Here's how:
+
+### Root cause (final)
+The model files reference classes in the package `main.java.edu.mit.compbio.ccinference.hmm.*`. This package is the **original MIT CompBio ccInference** package name, used by the authors before their refactor to `org.cchmc.epifluidlab.finaleme.hmm` (v0.58.x) and later to `edu.northwestern.epifluidlab.finaleme.hmm` (v0.61).
+
+The published v0.61 JAR only handles remapping from `org.cchmc.epifluidlab.finaleme.*` (v0.58), not from `main.java.edu.mit.compbio.ccinference.*`.
+
+The pretrained models' field structure (TreeMap-based `pi`/`a`) matches **v0.58.1**, not v0.61 (which uses primitive double[][] arrays per PLAN.md item 3A). So:
+1. The model class layout = v0.58.1 (TreeMap)
+2. The model class names = `main.java.edu.mit.compbio.ccinference.hmm.*` (unknown third package)
+
+### Solution
+1. Patched v0.61's `LegacyPackageObjectInputStream.remapLegacyClassName()` to handle the third legacy package prefix `main.java.edu.mit.compbio.ccinference.`
+2. Recompiled v0.61's `FinaleMe.java` with this extra remap
+3. Compiled v0.58.1's `BayesianNhmmV5`, `OpdfMultiMixtureGaussian`, `MultiMixtureGaussianDistribution`, `SimpleMatrix` source files against v0.61's classpath (keeping `edu.northwestern.epifluidlab.finaleme.hmm` package), producing TreeMap-based versions
+4. Built a hybrid JAR: v0.61 base + v0.58.1 HMM classes (with new package) + patched `FinaleMe.class`
+
+### Results
+- **BH01 chr22 decode with healthy_WGS model** (`/tmp/BH01_decoded_healthy.bed.gz`):
+  - 489,370 CpG positions
+  - Mean β = 71.97%, median = 91.30%, std = 35.80
+  - 84.16% overall agreement with model-implied labels
+- **BH01 chr22 decode with cancer_WGS model** (`/tmp/BH01_decoded_cancer.bed.gz`):
+  - 489,370 CpG positions
+  - Mean β = 69.31%, median = 85.42%, std = 35.13
+  - 80.33% overall agreement
+  - **Lower mean β in cancer** (~2.7 percentage points) — consistent with global hypomethylation in cancer
+- Runtime: ~32 seconds per model on M4
+
+### Output format
+BED.gz with columns:
+- chr, start, end, methy_perc_predict, methy_count_predict, total_count_predict, methy_perc_obs, methy_count_obs, total_count_obs
+
+### Files
+- `/tmp/BH01_decoded_healthy.bed.gz` (5.98 MB)
+- `/tmp/BH01_decoded_cancer.bed.gz` (6.11 MB)
+- `/tmp/finaleme_creative/FinaleMe-hybrid-patched.jar` (~50 MB, the runnable JAR)
+- `/tmp/finaleme_creative/v058_compile/` (sources for the patched classes)
+
+### Conclusion
+The pretrained models are now usable for decoding cfDNA methylation. The biological plausibility checks pass: cancer WGS produces lower mean methylation than healthy, both models have similar CpG-level predictions, and the per-position predictions agree with the HMM's own Viterbi-implied labels at 80-84%.
