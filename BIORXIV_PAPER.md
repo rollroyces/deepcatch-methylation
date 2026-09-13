@@ -1,7 +1,9 @@
 # DeepCatch Methylation Project — bioRxiv Synthesis
 
-**Date:** 2026-09-12
+**Date:** 2026-09-12 (updated 2026-09-13 with cross-reference to fragmentomics companion paper)
 **Title (proposed):** *CpG methylation channel for cfDNA cancer detection: open-data methods, documented null results, and honest baseline parity with fragmentomics*
+
+> **Companion paper**: A companion paper ([`BIORXIV_PAPER_FRAGMENTOMICS.md`](BIORXIV_PAPER_FRAGMENTOMICS.md)) reports the fragmentomics-only blood-test work using the same 627-sample cohort. It covers four enhancements — multi-cancer one-vs-rest classification (macro AUC 0.9703), sensitivity at 99% specificity (Sens@99% = 75.5%), the `cfdna-score` per-sample risk-score CLI, and Tissue-of-Origin from fragmentomics (macro AUC 0.9338 within-Cristiano) — and is the recommended primary citation for the fragmentomics channel. The methylation channel reported here adds +0.0006 AUC over that fragmentomics baseline (statistically significant, clinically negligible).
 **Authors:** Yu Ching Lam (Independent Researcher)
 **ORCID:** [0009-0008-9113-769X](https://orcid.org/0009-0008-9113-769X)
 **Repo:** https://github.com/rollroyces/deepcatch-methylation
