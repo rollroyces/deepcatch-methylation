@@ -31,7 +31,6 @@ from sklearn.preprocessing import StandardScaler
 # Add methylation project src/ for proxy helpers
 METH_SRC = "/Users/hermes/deepcatch-methylation/src"
 sys.path.insert(0, METH_SRC)
-from methylation.methylation_proxy import build_proxy_feature_matrix  # noqa: E402
 
 SEEDS = [42, 13, 7, 99, 1234]
 N_SPLITS = 5
@@ -110,7 +109,6 @@ def build_5channel_from_delfi_json(features_dir: str, sample_ids: list[str]):
     # This is documented as a proof-of-concept with reduced feature set.
 
     n5mb = 631
-    nfsd = 196
 
     # Pad 5mb arrays to exactly 631 bins (chrom 1..22+Y, 5Mb)
     # Some samples may have fewer bins if chr Y data missing; fill with 0.
@@ -124,7 +122,6 @@ def build_5channel_from_delfi_json(features_dir: str, sample_ids: list[str]):
     # 100kb channels: zero-filled (we don't have per-bin 100kb counts)
     n100kb = 30894
     X_r100 = np.zeros((len(sample_ids), n100kb), dtype=float)
-    X_c100 = np.zeros((len(sample_ids), n100kb), dtype=float)
 
     cohort_X = np.concatenate([X_r5, X_c5, X_r100, X_r100, X_fsd], axis=1)
     return cohort_X
@@ -133,15 +130,16 @@ def build_5channel_from_delfi_json(features_dir: str, sample_ids: list[str]):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--features", default="/tmp/finaledb_data/features")
-    ap.add_argument("--out", default="/Users/hermes/deepcatch-methylation/results/zenodo_crag_liver_auc.json")
+    default_out = "/Users/hermes/deepcatch-methylation/results/zenodo_crag_liver_auc.json"
+    ap.add_argument("--out", default=default_out)
     args = ap.parse_args()
 
     samples, y = load_samples(args.features)
     n_cancer = int(y.sum())
     n_healthy = int((1 - y).sum())
     print(f"[zenodo-crag] samples={len(samples)} cancer={n_cancer} healthy={n_healthy}")
-    print(f"  cancer IDs: {[s for s, l in zip(samples, y) if l == 1]}")
-    print(f"  healthy IDs: {[s for s, l in zip(samples, y) if l == 0]}")
+    print(f"  cancer IDs: {[s for s, lab in zip(samples, y) if lab == 1]}")
+    print(f"  healthy IDs: {[s for s, lab in zip(samples, y) if lab == 0]}")
 
     # Build feature matrix
     cohort_X = build_5channel_from_delfi_json(args.features, samples)
@@ -185,13 +183,19 @@ def main():
     pooled_auc = float(roc_auc_score(y, pooled_oof))
 
     result = {
-        "task": "Zenodo CRAG liver cohort — HCC vs matched healthy (L2-LR 5-fold × 5 seeds)",
-        "cohort": "CRAG liver.tar (Zhou 2022, Zenodo 6914806) — 11 of 16 samples (5 cancer + 6 matched healthy)",
+        "task": (
+            "Zenodo CRAG liver cohort — HCC vs matched healthy "
+            "(L2-LR 5-fold × 5 seeds)"
+        ),
+        "cohort": (
+            "CRAG liver.tar (Zhou 2022, Zenodo 6914806) — 11 of 16 samples "
+            "(5 cancer + 6 matched healthy)"
+        ),
         "n_samples": len(samples),
         "n_cancer": n_cancer,
         "n_healthy": n_healthy,
-        "samples_cancer": [s for s, l in zip(samples, y) if l == 1],
-        "samples_healthy": [s for s, l in zip(samples, y) if l == 0],
+        "samples_cancer": [s for s, lab in zip(samples, y) if lab == 1],
+        "samples_healthy": [s for s, lab in zip(samples, y) if lab == 0],
         "label_inference": "Trailing 'm' suffix in MAL#### IDs = matched healthy; no suffix = HCC",
         "protocol": {
             "model": "L2-LR (C=1.0, max_iter=20000)",
@@ -200,7 +204,13 @@ def main():
         },
         "features": {
             "n_features": int(cohort_X.shape[1]),
-            "description": "Reduced 5-channel: 5mb_ratio (631 bins) + 5mb_coverage (631 bins, median-normalized) + FSD proxy (196 bins). 100kb channels omitted (not stored in .delfi.json). FSD proxy is synthetic (delta-encoded from mean_ratio_100kb), not biologically valid — see caveats below.",
+            "description": (
+                "Reduced 5-channel: 5mb_ratio (631 bins) + 5mb_coverage "
+                "(631 bins, median-normalized) + FSD proxy (196 bins). "
+                "100kb channels omitted (not stored in .delfi.json). FSD "
+                "proxy is synthetic (delta-encoded from mean_ratio_100kb), "
+                "not biologically valid — see caveats below."
+            ),
         },
         "per_seed_aucs": per_seed_aucs,
         "auc_mean": float(np.mean(per_seed_aucs)),
@@ -209,13 +219,33 @@ def main():
         "pooled_auc": pooled_auc,
         "methylation_proxy_baseline_comparison": {
             "methylation_proxy_finaledb_627_AUC": 0.7769951581935055,
-            "interpretation": "AUC on CRAG liver cohort is NOT directly comparable to the FinaleDB 627-sample methylation-proxy AUC because (a) different cohort (CRAG MAL### ≠ FinaleDB H/HOT/C), (b) reduced feature set (no 100kb bins), (c) different synthetic FSD proxy. Use this only as a proof-of-concept that the pipeline can execute end-to-end on a real multi-sample fragmentomics cohort.",
+            "interpretation": (
+                "AUC on CRAG liver cohort is NOT directly comparable to "
+                "the FinaleDB 627-sample methylation-proxy AUC because (a) "
+                "different cohort (CRAG MAL### ≠ FinaleDB H/HOT/C), (b) "
+                "reduced feature set (no 100kb bins), (c) different "
+                "synthetic FSD proxy. Use this only as a proof-of-concept "
+                "that the pipeline can execute end-to-end on a real "
+                "multi-sample fragmentomics cohort."
+            ),
         },
         "caveats": [
-            "MAL1237m, MAL1246{,m}, MAL1323{,m} samples were truncated or missing from the extracted liver.tar due to disk-space constraints during download (only 12/16 samples completed extraction; only 11/16 produced valid features).",
-            "100kb_ratio and 100kb_counts channels are zero-filled (not stored in the simplified .delfi.json extractor). The methylation-proxy 100kb summary stats will therefore be uninformative on this cohort.",
-            "FSD proxy is a delta-encoded approximation derived from the mean 100kb ratio. It is not the true fragment-size distribution and inflates the apparent predictability of length-related features.",
-            "The Zenodo CRAG liver cohort has only 5 cancer + 6 healthy samples (after truncation). Statistical power is too low to draw a meaningful comparison vs the FinaleDB 627-sample AUC.",
+            ("MAL1237m, MAL1246{,m}, MAL1323{,m} samples were truncated or "
+             "missing from the extracted liver.tar due to disk-space "
+             "constraints during download (only 12/16 samples completed "
+             "extraction; only 11/16 produced valid features)."),
+            ("100kb_ratio and 100kb_counts channels are zero-filled (not "
+             "stored in the simplified .delfi.json extractor). The "
+             "methylation-proxy 100kb summary stats will therefore be "
+             "uninformative on this cohort."),
+            ("FSD proxy is a delta-encoded approximation derived from the "
+             "mean 100kb ratio. It is not the true fragment-size "
+             "distribution and inflates the apparent predictability of "
+             "length-related features."),
+            ("The Zenodo CRAG liver cohort has only 5 cancer + 6 healthy "
+             "samples (after truncation). Statistical power is too low to "
+             "draw a meaningful comparison vs the FinaleDB 627-sample "
+             "AUC."),
         ],
     }
 
