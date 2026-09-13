@@ -1,0 +1,59 @@
+{
+  "task": "Zenodo CRAG liver cohort \u2014 HCC vs matched healthy (L2-LR 5-fold \u00d7 5 seeds)",
+  "cohort": "CRAG liver.tar (Zhou 2022, Zenodo 6914806) \u2014 11 of 16 samples (5 cancer + 6 matched healthy)",
+  "n_samples": 11,
+  "n_cancer": 6,
+  "n_healthy": 5,
+  "samples_cancer": [
+    "MAL0646",
+    "MAL0714",
+    "MAL0944",
+    "MAL0945",
+    "MAL1205",
+    "MAL1237"
+  ],
+  "samples_healthy": [
+    "MAL0646m",
+    "MAL0714m",
+    "MAL0944m",
+    "MAL0945m",
+    "MAL1205m"
+  ],
+  "label_inference": "Trailing 'm' suffix in MAL#### IDs = matched healthy; no suffix = HCC",
+  "protocol": {
+    "model": "L2-LR (C=1.0, max_iter=20000)",
+    "cv": "5-fold StratifiedKFold \u00d7 5 seeds (42, 13, 7, 99, 1234)",
+    "preprocessing": "per-fold StandardScaler"
+  },
+  "features": {
+    "n_features": 63246,
+    "description": "Reduced 5-channel: 5mb_ratio (631 bins) + 5mb_coverage (631 bins, median-normalized) + FSD proxy (196 bins). 100kb channels omitted (not stored in .delfi.json). FSD proxy is synthetic (delta-encoded from mean_ratio_100kb), not biologically valid \u2014 see caveats below."
+  },
+  "per_seed_aucs": [
+    0.8,
+    0.8666666666666667,
+    0.7333333333333333,
+    0.8,
+    0.8
+  ],
+  "auc_mean": 0.8,
+  "auc_std": 0.04216370213557842,
+  "sens_at_spec95_per_seed": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "pooled_auc": 0.8,
+  "methylation_proxy_baseline_comparison": {
+    "methylation_proxy_finaledb_627_AUC": 0.7769951581935055,
+    "interpretation": "AUC on CRAG liver cohort is NOT directly comparable to the FinaleDB 627-sample methylation-proxy AUC because (a) different cohort (CRAG MAL### \u2260 FinaleDB H/HOT/C), (b) reduced feature set (no 100kb bins), (c) different synthetic FSD proxy. Use this only as a proof-of-concept that the pipeline can execute end-to-end on a real multi-sample fragmentomics cohort."
+  },
+  "caveats": [
+    "MAL1237m, MAL1246{,m}, MAL1323{,m} samples were truncated or missing from the extracted liver.tar due to disk-space constraints during download (only 12/16 samples completed extraction; only 11/16 produced valid features).",
+    "100kb_ratio and 100kb_counts channels are zero-filled (not stored in the simplified .delfi.json extractor). The methylation-proxy 100kb summary stats will therefore be uninformative on this cohort.",
+    "FSD proxy is a delta-encoded approximation derived from the mean 100kb ratio. It is not the true fragment-size distribution and inflates the apparent predictability of length-related features.",
+    "The Zenodo CRAG liver cohort has only 5 cancer + 6 healthy samples (after truncation). Statistical power is too low to draw a meaningful comparison vs the FinaleDB 627-sample AUC."
+  ]
+}
