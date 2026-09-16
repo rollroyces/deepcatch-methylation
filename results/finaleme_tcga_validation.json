@@ -1,0 +1,363 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-09-16T15:25:38Z",
+  "input": {
+    "finaleme_healthy_bed_gz": "/Users/hermes/deepcatch-methylation/results/finaleme_decode/BH01_chr22_healthy_decoded.bed.gz",
+    "finaleme_cancer_bed_gz": "/Users/hermes/deepcatch-methylation/results/finaleme_decode/BH01_chr22_cancer_decoded.bed.gz",
+    "tcga_lihc_normal_dir": "/Users/hermes/deepcatch-methylation/data/raw/tcga_lihc_subset",
+    "cpg_islands_chr22_bed": "/Users/hermes/deepcatch-methylation/data/reference/cpg_islands_chr22.bed",
+    "refgene_txt_gz": "/Users/hermes/deepcatch-methylation/data/reference/refGene.txt.gz",
+    "hm450_manifest_csv": "/tmp/HM450_manifest.csv",
+    "liftover_chain": "/Users/hermes/deepcatch-methylation/data/reference/hg18ToHg19.over.chain.gz"
+  },
+  "data_summary": {
+    "finaleme_n_cpgs_chr22": 489370,
+    "finaleme_n_cpgs_chr22_cancer": 489370,
+    "finaleme_healthy_mean_pct": 71.96941457266803,
+    "finaleme_cancer_mean_pct": 69.30608330160364,
+    "global_mean_diff_cancer_minus_healthy_pp": -2.6633312710643935,
+    "ucsc_chr22_cpg_islands": 719,
+    "ucsc_chr22_refgene_promoters": 1669,
+    "ucsc_chr22_refgene_gene_bodies": 1669,
+    "annotation_island_distribution_chr22": {
+      "OpenSea": 364386,
+      "Island": 50682,
+      "S_Shelf": 21896,
+      "N_Shelf": 19765,
+      "S_Shore": 16571,
+      "N_Shore": 16070
+    },
+    "annotation_region_distribution_chr22": {
+      "GeneBody": 220039,
+      "Intergenic": 128279,
+      "Island": 50682,
+      "S_Shelf": 21896,
+      "N_Shelf": 19765,
+      "S_Shore": 16571,
+      "N_Shore": 16070,
+      "Promoter": 16068
+    }
+  },
+  "per_region_stats": {
+    "healthy_model": {
+      "_overall": {
+        "n_cpgs": 489370,
+        "mean_pct": 71.96941457266803,
+        "median_pct": 91.30434782608695,
+        "std_pct": 35.80484195976728,
+        "p25_pct": 51.06382978723404,
+        "p75_pct": 100.0
+      },
+      "GeneBody": {
+        "n_cpgs": 220039,
+        "frac_of_total": 0.4496372887590167,
+        "mean_pct": 81.20957067332425,
+        "median_pct": 94.44444444444444,
+        "std_pct": 26.569760742145817,
+        "p25_pct": 71.11111111111111,
+        "p75_pct": 100.0
+      },
+      "Intergenic": {
+        "n_cpgs": 128279,
+        "frac_of_total": 0.2621309029977318,
+        "mean_pct": 77.69074881472513,
+        "median_pct": 91.89189189189187,
+        "std_pct": 28.87047068988703,
+        "p25_pct": 62.5,
+        "p75_pct": 100.0
+      },
+      "Island": {
+        "n_cpgs": 50682,
+        "frac_of_total": 0.10356580910149785,
+        "mean_pct": 19.809261025295235,
+        "median_pct": 0.0,
+        "std_pct": 38.873116781337345,
+        "p25_pct": 0.0,
+        "p75_pct": 0.0
+      },
+      "N_Shelf": {
+        "n_cpgs": 19765,
+        "frac_of_total": 0.04038866297484521,
+        "mean_pct": 77.81932456827857,
+        "median_pct": 94.73684210526316,
+        "std_pct": 31.655375333502583,
+        "p25_pct": 65.95744680851064,
+        "p75_pct": 100.0
+      },
+      "N_Shore": {
+        "n_cpgs": 16070,
+        "frac_of_total": 0.03283813883155894,
+        "mean_pct": 62.54145314298007,
+        "median_pct": 87.5,
+        "std_pct": 42.22585527431972,
+        "p25_pct": 7.894736842105263,
+        "p75_pct": 100.0
+      },
+      "Promoter": {
+        "n_cpgs": 16068,
+        "frac_of_total": 0.0328340519443366,
+        "mean_pct": 68.51852114069307,
+        "median_pct": 88.63636363636364,
+        "std_pct": 37.24531557597154,
+        "p25_pct": 39.130434782608695,
+        "p75_pct": 100.0
+      },
+      "S_Shelf": {
+        "n_cpgs": 21896,
+        "frac_of_total": 0.044743241310256046,
+        "mean_pct": 78.37119318018232,
+        "median_pct": 95.23809523809524,
+        "std_pct": 31.57848308492474,
+        "p25_pct": 67.74193548387096,
+        "p75_pct": 100.0
+      },
+      "S_Shore": {
+        "n_cpgs": 16571,
+        "frac_of_total": 0.03386190408075689,
+        "mean_pct": 61.56682203181361,
+        "median_pct": 86.66666666666667,
+        "std_pct": 42.60835582860511,
+        "p25_pct": 5.2631578947368425,
+        "p75_pct": 100.0
+      }
+    },
+    "cancer_model": {
+      "_overall": {
+        "n_cpgs": 489370,
+        "mean_pct": 69.30608330160364,
+        "median_pct": 85.41666666666667,
+        "std_pct": 35.13449608524081,
+        "p25_pct": 44.73684210526316,
+        "p75_pct": 97.67441860465117
+      },
+      "GeneBody": {
+        "n_cpgs": 220039,
+        "frac_of_total": 0.4496372887590167,
+        "mean_pct": 78.40621891233339,
+        "median_pct": 89.47368421052632,
+        "std_pct": 26.52010925697383,
+        "p25_pct": 68.75,
+        "p75_pct": 100.0
+      },
+      "Intergenic": {
+        "n_cpgs": 128279,
+        "frac_of_total": 0.2621309029977318,
+        "mean_pct": 74.05416305512921,
+        "median_pct": 85.71428571428571,
+        "std_pct": 29.016025417320737,
+        "p25_pct": 57.4468085106383,
+        "p75_pct": 97.43589743589745
+      },
+      "Island": {
+        "n_cpgs": 50682,
+        "frac_of_total": 0.10356580910149785,
+        "mean_pct": 19.645886574115753,
+        "median_pct": 0.0,
+        "std_pct": 38.13669148947015,
+        "p25_pct": 0.0,
+        "p75_pct": 0.0
+      },
+      "N_Shelf": {
+        "n_cpgs": 19765,
+        "frac_of_total": 0.04038866297484521,
+        "mean_pct": 75.13074448616622,
+        "median_pct": 89.65517241379311,
+        "std_pct": 31.377613780841408,
+        "p25_pct": 62.22222222222222,
+        "p75_pct": 100.0
+      },
+      "N_Shore": {
+        "n_cpgs": 16070,
+        "frac_of_total": 0.03283813883155894,
+        "mean_pct": 59.1113693761436,
+        "median_pct": 78.98981324278438,
+        "std_pct": 41.540208514260286,
+        "p25_pct": 4.761904761904762,
+        "p75_pct": 100.0
+      },
+      "Promoter": {
+        "n_cpgs": 16068,
+        "frac_of_total": 0.0328340519443366,
+        "mean_pct": 65.71664132077086,
+        "median_pct": 82.6086956521739,
+        "std_pct": 36.34838787209208,
+        "p25_pct": 33.333333333333336,
+        "p75_pct": 97.14285714285714
+      },
+      "S_Shelf": {
+        "n_cpgs": 21896,
+        "frac_of_total": 0.044743241310256046,
+        "mean_pct": 76.28825972703189,
+        "median_pct": 90.74074074074076,
+        "std_pct": 30.908409619514003,
+        "p25_pct": 65.78947368421052,
+        "p75_pct": 100.0
+      },
+      "S_Shore": {
+        "n_cpgs": 16571,
+        "frac_of_total": 0.03386190408075689,
+        "mean_pct": 60.79196052064741,
+        "median_pct": 81.25,
+        "std_pct": 40.64504405911809,
+        "p25_pct": 13.79310344827586,
+        "p75_pct": 100.0
+      }
+    },
+    "ks_healthy_vs_cancer": {
+      "_overall": {
+        "ks_statistic": 0.11513783027157365,
+        "pvalue": 0.0,
+        "n_healthy": 489370,
+        "n_cancer": 489370
+      },
+      "GeneBody": {
+        "n_healthy": 220039,
+        "n_cancer": 220039,
+        "ks_statistic": 0.1277909825076463,
+        "pvalue": 0.0,
+        "mean_diff_cancer_minus_healthy_pp": -2.8033517609908642
+      },
+      "Intergenic": {
+        "n_healthy": 128279,
+        "n_cancer": 128279,
+        "ks_statistic": 0.1250477474878975,
+        "pvalue": 0.0,
+        "mean_diff_cancer_minus_healthy_pp": -3.636585759595917
+      },
+      "Island": {
+        "n_healthy": 50682,
+        "n_cancer": 50682,
+        "ks_statistic": 0.029773884219249425,
+        "pvalue": 5.975944142447899e-20,
+        "mean_diff_cancer_minus_healthy_pp": -0.16337445117948235
+      },
+      "N_Shelf": {
+        "n_healthy": 19765,
+        "n_cancer": 19765,
+        "ks_statistic": 0.12704275233999496,
+        "pvalue": 1.7028787657222246e-139,
+        "mean_diff_cancer_minus_healthy_pp": -2.6885800821123524
+      },
+      "N_Shore": {
+        "n_healthy": 16070,
+        "n_cancer": 16070,
+        "ks_statistic": 0.11412570006222778,
+        "pvalue": 1.272817588449523e-91,
+        "mean_diff_cancer_minus_healthy_pp": -3.430083766836468
+      },
+      "Promoter": {
+        "n_healthy": 16068,
+        "n_cancer": 16068,
+        "ks_statistic": 0.123848643266119,
+        "pvalue": 7.318702835700006e-108,
+        "mean_diff_cancer_minus_healthy_pp": -2.801879819922206
+      },
+      "S_Shelf": {
+        "n_healthy": 21896,
+        "n_cancer": 21896,
+        "ks_statistic": 0.12216843259042753,
+        "pvalue": 7.3485354803969675e-143,
+        "mean_diff_cancer_minus_healthy_pp": -2.0829334531504315
+      },
+      "S_Shore": {
+        "n_healthy": 16571,
+        "n_cancer": 16571,
+        "ks_statistic": 0.102347474503651,
+        "pvalue": 5.0920995617134426e-76,
+        "mean_diff_cancer_minus_healthy_pp": -0.7748615111662005
+      }
+    }
+  },
+  "tcga_correlation": {
+    "overall": {
+      "n_cpgs": 6847,
+      "spearman_rho_healthy_vs_tcga": 0.8080188018207096,
+      "spearman_pvalue_healthy_vs_tcga": 0.0,
+      "spearman_rho_cancer_vs_tcga": 0.8062109763323869,
+      "spearman_pvalue_cancer_vs_tcga": 0.0,
+      "pearson_r_healthy_vs_tcga": 0.8212902660187489,
+      "pearson_pvalue_healthy_vs_tcga": 0.0,
+      "pearson_r_cancer_vs_tcga": 0.8101926476300236,
+      "pearson_pvalue_cancer_vs_tcga": 0.0,
+      "mean_delta_healthy_minus_tcga_pp": -5.030631047905799,
+      "mean_delta_cancer_minus_tcga_pp": -6.85967644124971,
+      "median_delta_healthy_minus_tcga_pp": -2.815195280859237,
+      "median_delta_cancer_minus_tcga_pp": -3.242321842438176
+    },
+    "per_region": {
+      "GeneBody": {
+        "n_cpgs": 615,
+        "spearman_rho_healthy_vs_tcga": 0.3590436748820947,
+        "spearman_pvalue_healthy_vs_tcga": 3.777418798471398e-20,
+        "spearman_rho_cancer_vs_tcga": 0.38489992543019497,
+        "spearman_pvalue_cancer_vs_tcga": 3.761260846080481e-23
+      },
+      "Intergenic": {
+        "n_cpgs": 146,
+        "spearman_rho_healthy_vs_tcga": 0.3752968888554401,
+        "spearman_pvalue_healthy_vs_tcga": 3.048633633798354e-06,
+        "spearman_rho_cancer_vs_tcga": 0.36372556543463586,
+        "spearman_pvalue_cancer_vs_tcga": 6.401208082259726e-06
+      },
+      "Island": {
+        "n_cpgs": 3009,
+        "spearman_rho_healthy_vs_tcga": 0.7105657427225817,
+        "spearman_pvalue_healthy_vs_tcga": 0.0,
+        "spearman_rho_cancer_vs_tcga": 0.6958981778569643,
+        "spearman_pvalue_cancer_vs_tcga": 0.0
+      },
+      "N_Shelf": {
+        "n_cpgs": 491,
+        "spearman_rho_healthy_vs_tcga": 0.482376865864666,
+        "spearman_pvalue_healthy_vs_tcga": 5.5787456652022516e-30,
+        "spearman_rho_cancer_vs_tcga": 0.49742892290671575,
+        "spearman_pvalue_cancer_vs_tcga": 4.7056474991163393e-32
+      },
+      "N_Shore": {
+        "n_cpgs": 607,
+        "spearman_rho_healthy_vs_tcga": 0.8085284498846084,
+        "spearman_pvalue_healthy_vs_tcga": 1.9066145882457735e-141,
+        "spearman_rho_cancer_vs_tcga": 0.8023508494343815,
+        "spearman_pvalue_cancer_vs_tcga": 1.0133177029772819e-137
+      },
+      "Promoter": {
+        "n_cpgs": 748,
+        "spearman_rho_healthy_vs_tcga": 0.4711887193639857,
+        "spearman_pvalue_healthy_vs_tcga": 1.3234031731896365e-42,
+        "spearman_rho_cancer_vs_tcga": 0.476296572987898,
+        "spearman_pvalue_cancer_vs_tcga": 1.2770506954353338e-43
+      },
+      "S_Shelf": {
+        "n_cpgs": 567,
+        "spearman_rho_healthy_vs_tcga": 0.3969697197185068,
+        "spearman_pvalue_healthy_vs_tcga": 7.657561083339993e-23,
+        "spearman_rho_cancer_vs_tcga": 0.41716189408682,
+        "spearman_pvalue_cancer_vs_tcga": 2.7870715558963097e-25
+      },
+      "S_Shore": {
+        "n_cpgs": 664,
+        "spearman_rho_healthy_vs_tcga": 0.7637713803011739,
+        "spearman_pvalue_healthy_vs_tcga": 5.667320381357046e-128,
+        "spearman_rho_cancer_vs_tcga": 0.7430173344458026,
+        "spearman_pvalue_cancer_vs_tcga": 1.4752016254070811e-117
+      }
+    }
+  },
+  "tcga_metadata": {
+    "n_normal_samples": 6,
+    "n_probes_with_tcga_mean": 8551,
+    "n_triple_overlap_cpgs": 7883,
+    "n_probes_with_complete_data": 6847,
+    "n_hm450_chr22_hg19_probes": 8551
+  },
+  "caveats": [
+    "BH01 is healthy plasma cfDNA from Snyder 2016; TCGA-LIHC is liver HCC tissue \u2014 these are biologically distinct (cfDNA is fragmented cell-free DNA from dying cells; tissue is intact cellular DNA from resected tumor). The comparison is qualitative, not direct.",
+    "FinaleMe outputs \u03b2 in [0,1]; TCGA HM450 sesame \u03b2 is in [0,1]; both are uncalibrated against each other. Spearman captures rank-order agreement only.",
+    "Illumina HM450 manifest uses hg18 coordinates for MAPINFO; we liftOver to hg19 to match FinaleMe hg19 predictions.",
+    "GDC TCGA-LIHC HM450 files were processed by the SeSAMe workflow (dc9467b78cf5); probe-level \u03b2 normalisation is independent of the FinaleMe HMM.",
+    "Healthy plasma \u03b2 on a per-CpG basis is dominated by peripheral blood mononuclear cells; liver tissue \u03b2 from TCGA reflects hepatocytes + tumor stroma \u2014 different cell-type composition is the dominant source of disagreement.",
+    "FinaleMe chr22 coverage here is a single sample (BH01); no technical replicates were decoded. n=1 makes any sample-level correlation noisy.",
+    "A rigorous validation would require paired plasma samples with matched tissue methylation \u2014 currently we have neither (BH01 is published cfDNA, not paired with tissue)."
+  ],
+  "runtime_secs": 6.18
+}
