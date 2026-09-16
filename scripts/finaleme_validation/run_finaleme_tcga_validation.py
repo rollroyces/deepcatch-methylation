@@ -211,7 +211,8 @@ def annotate_in_gene_body(positions: np.ndarray, body_bed: pd.DataFrame) -> np.n
     return in_body
 
 
-def classify_region(island_label: np.ndarray, in_prom: np.ndarray, in_body: np.ndarray) -> np.ndarray:
+def classify_region(island_label: np.ndarray, in_prom: np.ndarray,
+in_body: np.ndarray) -> np.ndarray:
     """Hierarchical classification.
 
     Priority order (most biologically meaningful label wins):
@@ -334,14 +335,17 @@ def build_hm450_chr22_hg19(manifest_csv: Path, chain: Path) -> pd.DataFrame:
         "UCSC_RefGene_Name", "UCSC_RefGene_Group",
     ]
     m = m[cols].copy()
-    m.columns = ["probe", "chr_raw", "pos_hg18", "build", "cgi_name", "cgi_relation", "gene_name", "gene_group"]
+    m.columns = ["probe", "chr_raw", "pos_hg18", "build", "cgi_name",
+    "cgi_relation", "gene_name", "gene_group"]
     m["chr_raw"] = m["chr_raw"].astype(str)
     m["build"] = pd.to_numeric(m["build"], errors="coerce")
     m["pos_hg18"] = pd.to_numeric(m["pos_hg18"], errors="coerce")
     m22 = m[m["chr_raw"] == "22"].dropna(subset=["pos_hg18", "build"]).copy()
     m22["pos_hg18"] = m22["pos_hg18"].astype(int)
     m22["build"] = m22["build"].astype(int)
-    log(f"  chr22 probes in manifest: {len(m22):,} (build 36={int((m22['build']==36).sum())}, build 37={int((m22['build']==37).sum())})")
+    log(f"  chr22 probes in manifest: {len(m22):,}")
+    log(f"    build 36 (hg18): {int((m22['build']==36).sum())}")
+    log(f"    build 37 (hg19): {int((m22['build']==37).sum())}")
 
     # Illumina MAPINFO is 1-based; FinaleMe BED is 0-based → pos_hg19_0based = MAPINFO - 1
     m22["pos_hg19"] = m22["pos_hg18"] - 1
@@ -403,8 +407,12 @@ def main():
     cancer["region"] = cancer["pos"].map(region_lookup).fillna("Intergenic")
 
     # Per-region stats — one set per model
-    healthy_stats = per_region_stats(healthy.rename(columns={"beta_pct": "beta_pct"}).assign(model="healthy"))
-    cancer_stats = per_region_stats(cancer.rename(columns={"beta_pct": "beta_pct"}).assign(model="cancer"))
+    healthy_stats = per_region_stats(
+        healthy.rename(columns={"beta_pct": "beta_pct"}).assign(model="healthy")
+    )
+    cancer_stats = per_region_stats(
+        cancer.rename(columns={"beta_pct": "beta_pct"}).assign(model="cancer")
+    )
 
     # KS healthy vs cancer per region
     both = pd.concat([
@@ -466,7 +474,8 @@ def main():
             log(f"  CpG-triple (TCGA + FinaleMe healthy + cancer) overlap: {len(comp):,}")
             n_nan_tcga = int(comp["tcga_pct"].isna().sum())
             log(f"  probes with NA TCGA β (excluded from correlation): {n_nan_tcga}")
-            comp_corr = comp.dropna(subset=["tcga_pct", "finaleme_healthy_pct", "finaleme_cancer_pct"]).copy()
+            comp_corr = comp.dropna(subset=["tcga_pct", "finaleme_healthy_pct",
+            "finaleme_cancer_pct"]).copy()
             log(f"  probes with complete data: {len(comp_corr):,}")
 
             tcga_meta = {
@@ -479,8 +488,10 @@ def main():
 
             if len(comp_corr) >= 20:
                 # Spearman overall (TCGA mean β vs FinaleMe healthy)
-                rho_h, p_h = stats.spearmanr(comp_corr["tcga_pct"], comp_corr["finaleme_healthy_pct"])
-                rho_c, p_c = stats.spearmanr(comp_corr["tcga_pct"], comp_corr["finaleme_cancer_pct"])
+                rho_h, p_h = stats.spearmanr(comp_corr["tcga_pct"],
+                comp_corr["finaleme_healthy_pct"])
+                rho_c, p_c = stats.spearmanr(comp_corr["tcga_pct"],
+                comp_corr["finaleme_cancer_pct"])
                 # Pearson too for completeness (linear)
                 r_h, pp_h = stats.pearsonr(comp_corr["tcga_pct"], comp_corr["finaleme_healthy_pct"])
                 r_c, pp_c = stats.pearsonr(comp_corr["tcga_pct"], comp_corr["finaleme_cancer_pct"])
@@ -496,8 +507,10 @@ def main():
                             "note": "n<20, not computed",
                         }
                         continue
-                    rho_reg_h, p_reg_h = stats.spearmanr(sub["tcga_pct"], sub["finaleme_healthy_pct"])
-                    rho_reg_c, p_reg_c = stats.spearmanr(sub["tcga_pct"], sub["finaleme_cancer_pct"])
+                    rho_reg_h, p_reg_h = stats.spearmanr(sub["tcga_pct"],
+                    sub["finaleme_healthy_pct"])
+                    rho_reg_c, p_reg_c = stats.spearmanr(sub["tcga_pct"],
+                    sub["finaleme_cancer_pct"])
                     per_region_spearman[reg] = {
                         "n_cpgs": int(len(sub)),
                         "spearman_rho_healthy_vs_tcga": float(rho_reg_h),
@@ -525,10 +538,14 @@ def main():
                         "pearson_pvalue_healthy_vs_tcga": float(pp_h),
                         "pearson_r_cancer_vs_tcga": float(r_c),
                         "pearson_pvalue_cancer_vs_tcga": float(pp_c),
-                        "mean_delta_healthy_minus_tcga_pp": float(comp["delta_healthy_minus_tcga_pp"].dropna().mean()),
-                        "mean_delta_cancer_minus_tcga_pp": float(comp["delta_cancer_minus_tcga_pp"].dropna().mean()),
-                        "median_delta_healthy_minus_tcga_pp": float(comp["delta_healthy_minus_tcga_pp"].dropna().median()),
-                        "median_delta_cancer_minus_tcga_pp": float(comp["delta_cancer_minus_tcga_pp"].dropna().median()),
+                        "mean_delta_healthy_minus_tcga_pp":
+                            float(comp["delta_healthy_minus_tcga_pp"].dropna().mean()),
+                        "mean_delta_cancer_minus_tcga_pp":
+                            float(comp["delta_cancer_minus_tcga_pp"].dropna().mean()),
+                        "median_delta_healthy_minus_tcga_pp":
+                            float(comp["delta_healthy_minus_tcga_pp"].dropna().median()),
+                        "median_delta_cancer_minus_tcga_pp":
+                            float(comp["delta_cancer_minus_tcga_pp"].dropna().median()),
                     },
                     "per_region": per_region_spearman,
                 }
