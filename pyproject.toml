@@ -1,38 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "deepcatch-methylation"
-version = "0.0.1"
-description = "CpG methylation-based cfDNA cancer detection"
+version = "0.10.0"
+description = "Real-time cfRNA read-side companion to mrnavax-rare — observes plasma cfRNA persistence and lifts it into a real-time chronic-disease-management feature schema."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "AGPL-3.0-or-later" }
 authors = [
-    {name = "Yu Ching Lam", email = "rollroyces@users.noreply.github.com"},
+    { name = "Royce" },
 ]
-dependencies = [
-    "numpy>=1.26",
-    "pandas>=2.0",
-    "scipy>=1.11",
-    "scikit-learn>=1.3",
-]
+dependencies = []
 
 [project.optional-dependencies]
-finaleme = [
-    "FinaleToolkit>=1.1",
-    "pysam>=0.22",
-]
 dev = [
     "pytest>=7.0",
-    "ruff>=0.1",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["deepcatch_methylation*"]
+
 [tool.pytest.ini_options]
-testpaths = ["test"]
-pythonpath = ["src"]
-addopts = "-v --tb=short"
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+testpaths = ["tests"]
+addopts = "-v"

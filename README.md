@@ -1,73 +1,99 @@
 # deepcatch-methylation
 
-CpG methylation-based cfDNA cancer detection.
+> Real-time cfRNA read-side companion to [mrnavax-rare](https://github.com/rollroyces/mrnavax-rare).
+> Observes plasma cfRNA persistence and lifts it into a real-time
+> chronic-disease-management (CDM) feature schema.
 
-> **Phase 0 (smoke validation, starting 2026-09-10):** Verify FinaleMe (Liu et al. *Nat Commun* 15:2790, 2024) produces a meaningful cancer-vs-healthy signal when run on cfDNA WGS. If AUC > 0.65 on a 50-sample subset, proceed to Phase 1 (627-cohort methylation baseline).
+## v0.10.0 status
 
-This repo is the active development location for the methylation channel extension to the existing [`rollroyces/deepcatch`](https://github.com/rollroyces/deepcatch) framework. It complements (does NOT replace) the fragmentomics channel in [`rollroyces/cfdna-fragmentomics-pipeline`](https://github.com/rollroyces/cfdna-fragmentomics-pipeline).
+This is the **v0.10.0 initial scaffold** of the deepcatch-methylation
+project. It ships:
 
-## Quick links
+- One coupling module: `deepcatch_methylation.cfrna_coupling`
+- The `RealTimeCDMObservation` CDM feature schema
+- A `CfRNAPersistenceInput` typed-dict contract that mirrors the
+  output shape of `mrnavax_rare.safety.cfrna.predict_cfrna_persistence`
+- Research-use anomaly + dosing-recommendation defaults
 
-- **[`METHYLATION_PROJECT.md`](METHYLATION_PROJECT.md)** — full scope, phased plan, timeline, exit criteria
-- **[`docs/methylation_inventory.md`](docs/methylation_inventory.md)** — what methylation scaffolding already exists in the deepcatch framework
-- **[`docs/methylation_data_sources.md`](docs/methylation_data_sources.md)** — public methylation data audit
+It does NOT yet ship:
 
-## Status
+- Wet-lab-validated anomaly thresholds (`ANOMALY_RATIO_LOW` /
+  `ANOMALY_RATIO_HIGH` are research-use defaults)
+- Real-patient data processing
+- A live integration with a methylation-array or RNA-seq read pipeline
 
-| Phase | Goal | Status |
-|---|---|---|
-| **0** | FinaleMe smoke validation on 50 samples | 🔄 Starting |
-| 1 | 627-cohort methylation baseline (cross-study AUC) | ⏸ Blocked on Phase 0 |
-| 2 | Head-to-head + combined-feature fusion | ⏸ Blocked on Phase 1 |
-| 3 | Tissue-of-origin (TOO) ablation | ⏸ Conditional on Phase 1 |
-| 4 | Methylation GNN training on real data | ⏸ Deferred — needs collaborator + GPU |
+## Architecture
 
-## Why FinaleMe (no new assay)?
+`mrnavax-rare` is the **design side**: it predicts how long a designed
+mRNA therapeutic should persist in plasma.
 
-The project targets the existing 627-sample WGS cohort (Cristiano 2019 + Jiang 2018 + others) without requiring new methylation data. FinaleMe imputes single-CpG methylation from plain cfDNA WGS fragments — validated auROC 0.91 on fragments with ≥5 CpGs in CpG-rich regions. MIT-licensed, code at https://github.com/epifluidlab/FinaleMe.
-
-The alternative path (true bisulfite sequencing, EM-seq, or 850K array data) requires DAC approval (months), purchasing arrays ($100K+), or waiting for a public WGBS cfDNA cohort at CCGA's scale — which does not exist.
-
-## Repo layout
+`deepcatch-methylation` is the **read side**: it observes how much
+cfRNA is actually circulating in the patient's plasma sample and
+flags anomalies against the prediction.
 
 ```
-deepcatch-methylation/
-├── README.md                          # this file
-├── METHYLATION_PROJECT.md             # full project plan
-├── docs/
-│   ├── methylation_inventory.md       # existing scaffolding audit
-│   └── methylation_data_sources.md    # public data audit
-├── src/methylation/
-│   ├── finaleme_extract.py            # Phase 0/1: WGS → methylation features
-│   ├── methylation_baseline.py        # Phase 1: LR baseline + 5-fold CV
-│   ├── methylation_vs_fragmentomics.py  # Phase 2: head-to-head
-│   ├── methylation_fusion.py          # Phase 2: combined-feature fusion
-│   └── too_ablation.py                # Phase 3: tissue-of-origin
-├── scripts/
-│   ├── cfdna-finaleme                 # CLI wrapper
-│   └── cfdna-methylation-baseline     # CLI wrapper
-├── test/
-│   ├── test_finaleme_extract.py
-│   ├── test_methylation_baseline.py
-│   └── test_methylation_fusion.py
-├── results/                           # JSON outputs
-└── .github/workflows/
-    └── methylation-tests.yml          # CI
+mrnavax_rare.safety.cfrna.predict_cfrna_persistence
+    → CfRNAPersistencePrediction
+        → deepcatch_methylation.cfrna_coupling.couple_cfrna_to_cdm
+            → RealTimeCDMObservation
 ```
 
-## Honest constraints
+The two projects share **no runtime code**. The coupling is a strict
+TypedDict contract — the read side is deployable independently of the
+design side.
 
-- **No institutional affiliation** — solo project.
-- **No methylation-expert collaborator** (yet). Blocks Phase 4, not Phases 0-2.
-- **FinaleMe is an imputation**, not an assay. The signal ceiling is lower than true bisulfite methylation.
-- **Headline numbers will not beat Galleri.** The contribution is methodological: showing what signal is extractable from a 627-sample WGS cohort with imputation.
+## Quick start
 
-## Author
+```python
+from deepcatch_methylation.cfrna_coupling import (
+    CfRNAPersistenceInput,
+    couple_cfrna_to_cdm,
+)
 
-**Yu Ching Lam** (Independent Researcher)
-ORCID: [0009-0008-9113-769X](https://orcid.org/0009-0008-9113-769X)
-GitHub: [@rollroyces](https://github.com/rollroyces)
+# 1. Run the design-side prediction in mrnavax-rare:
+#    prediction = mrnavax_rare.safety.cfrna.predict_cfrna_persistence(...)
+#    prediction_dict = prediction.as_dict()
 
-## License
+# 2. Lift into the CDM feature schema:
+prediction: CfRNAPersistenceInput = {
+    "predicted_half_life_hours": 54.0,
+    "persistence_category": "medium",
+    "target_tissue": "liver",
+    "codon_optimization": "balanced",
+}
 
-MIT (matches FinaleMe upstream).
+obs = couple_cfrna_to_cdm(
+    prediction=prediction,
+    observed_cfRNA_concentration_pg_ml=200.0,
+    sampling_time_post_dose_hours=24.0,
+    dose_cfRNA_at_t0_pg_ml=1000.0,
+)
+
+print(obs.dosing_recommendation)  # "increase" / "maintain" / "decrease" / "escalate" / "hold"
+print(obs.anomaly_flag)            # True / False
+```
+
+## Honest disclosure
+
+- The v0.10.0 anomaly thresholds (`ANOMALY_RATIO_LOW = 0.5`,
+  `ANOMALY_RATIO_HIGH = 2.0`) are **research-use defaults**. They
+  will need clinical calibration before any production use.
+- The dosing-recommendation rules are heuristic. They are NOT a
+  substitute for clinician judgment.
+- No patient data has been processed by this code path.
+- No numerical anchor in this project is fabricated — every
+  quantitative input comes from the upstream mrnavax-rare
+  `cfrna_persistence_classifier` or is a research-use structural
+  default.
+
+## Tests
+
+```bash
+cd deepcatch-methylation
+python3 -m pytest tests/
+```
+
+## Sister repos
+
+- [mrnavax-rare](https://github.com/rollroyces/mrnavax-rare) — mRNA therapeutics design toolkit (v0.10.0 ships the upstream cfRNA persistence classifier).
+- [deepcatch](https://github.com/rollroyces/deepcatch) — fragmentomics + multimodal cfDNA cancer detection.
