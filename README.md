@@ -1,99 +1,67 @@
-# deepcatch-methylation
+# deepcatch-methylation — ARCHIVED on 2026-10-16
 
-> Real-time cfRNA read-side companion to [mrnavax-rare](https://github.com/rollroyces/mrnavax-rare).
-> Observes plasma cfRNA persistence and lifts it into a real-time
-> chronic-disease-management (CDM) feature schema.
+> ⚠️ **This repository is archived.** The cfRNA persistence coupling and
+> methylation-array reader have been folded into
+> [**`rollroyces/deepcatch`**](https://github.com/rollroyces/deepcatch)
+> as part of the v2.3.0 release (CANCER-SEEK integration).
 
-## v0.10.0 status
+## Scope conflict resolution (final)
 
-This is the **v0.10.0 initial scaffold** of the deepcatch-methylation
-project. It ships:
+This repo's `README.md` originally described a **cfRNA read-side companion
+to `mrnavax-rare`** while the GitHub repo **description** and the
+`METHYLATION_PROJECT.md` content described **CpG methylation-based
+cfDNA cancer detection**. Both scopes are real, but the consolidation
+opted for the **CpG / FinaleMe** track documented in
+[`METHYLATION_PROJECT.md`](https://github.com/rollroyces/deepcatch/blob/main/METHYLATION_PROJECT.md).
 
-- One coupling module: `deepcatch_methylation.cfrna_coupling`
-- The `RealTimeCDMObservation` CDM feature schema
-- A `CfRNAPersistenceInput` typed-dict contract that mirrors the
-  output shape of `mrnavax_rare.safety.cfrna.predict_cfrna_persistence`
-- Research-use anomaly + dosing-recommendation defaults
+The cfRNA coupling becomes `deepcatch/src/methylation/cfrna_coupling.py`
+(a structural companion, no runtime dependency on `mrnavax-rare`); the
+methylation-array reader becomes `deepcatch/src/methylation/methylation_reader.py`.
 
-It does NOT yet ship:
+| What lived here                                                 | Where it lives now                                |
+|-----------------------------------------------------------------|---------------------------------------------------|
+| `deepcatch_methylation/cfrna_coupling.py`                         | `deepcatch/src/methylation/cfrna_coupling.py`     |
+| `deepcatch_methylation/methylation_reader.py`                     | `deepcatch/src/methylation/methylation_reader.py` |
+| `METHYLATION_PROJECT.md`                                         | `deepcatch/METHYLATION_PROJECT.md` (verbatim; SHA `3282f90b`) |
+| `PHASE0_PLAN.md`                                                  | `deepcatch/docs/ultrasensitive/PHASE0_PLAN.md`    |
+| `BIORXIV_PAPER_FRAGMENTOMICS.{md,pdf}`                            | `deepcatch/paper/methylation/BIORXIV_PAPER_FRAGMENTOMICS.{md,pdf}` |
+| `CITATION.cff` (v0.10.0)                                          | `deepcatch/CITATION.cff` (v2.3.0; v0.10.0 block merged) |
+| `.github/workflows/methylation-tests.yml`                        | superseded by `deepcatch`'s existing test infra (no `[methylation]` mirror required) |
 
-- Wet-lab-validated anomaly thresholds (`ANOMALY_RATIO_LOW` /
-  `ANOMALY_RATIO_HIGH` are research-use defaults)
-- Real-patient data processing
-- A live integration with a methylation-array or RNA-seq read pipeline
+## Why archived?
 
-## Architecture
+`METHYLATION_PROJECT.md` §9 already concluded this:
 
-`mrnavax-rare` is the **design side**: it predicts how long a designed
-mRNA therapeutic should persist in plasma.
+> "A separate `rollroyces/deepcatch-methylation` repo is **not** warranted
+> at this stage — the project is an extension of DeepCatch, not a separate
+> framework. Splitting repos adds CI/maintenance burden without research
+> benefit. If the project grows past Phase 4 (the GNN training), we can
+> revisit repo splitting."
 
-`deepcatch-methylation` is the **read side**: it observes how much
-cfRNA is actually circulating in the patient's plasma sample and
-flags anomalies against the prediction.
+We did. Phase 0/1/2 work shipped under `deepcatch/src/methylation/` and
+this repo has no remaining deliverables.
 
-```
-mrnavax_rare.safety.cfrna.predict_cfrna_persistence
-    → CfRNAPersistencePrediction
-        → deepcatch_methylation.cfrna_coupling.couple_cfrna_to_cdm
-            → RealTimeCDMObservation
-```
+## What still works here?
 
-The two projects share **no runtime code**. The coupling is a strict
-TypedDict contract — the read side is deployable independently of the
-design side.
+- git history intact; SHA references continue to resolve.
+- LICENSE (MIT) added on 2026-10-16; until now the repo had no LICENSE
+  file -- the MIT license below applies retroactively to all v0.10.0
+  and v0.11.0 commits.
+- Workflow file `methylation-tests.yml` is left in place but disabled
+  by archiving; admins should disable branch-protection rules.
 
-## Quick start
+## Where to file a new issue?
 
-```python
-from deepcatch_methylation.cfrna_coupling import (
-    CfRNAPersistenceInput,
-    couple_cfrna_to_cdm,
-)
+- **Methylation** → https://github.com/rollroyces/deepcatch/issues with
+  the `methylation` label.
+- **cfRNA coupling** (cross-cutting with mRNA therapy design)
+  → https://github.com/rollroyces/deepcatch/issues with the `mrnavax` label.
 
-# 1. Run the design-side prediction in mrnavax-rare:
-#    prediction = mrnavax_rare.safety.cfrna.predict_cfrna_persistence(...)
-#    prediction_dict = prediction.as_dict()
+---
 
-# 2. Lift into the CDM feature schema:
-prediction: CfRNAPersistenceInput = {
-    "predicted_half_life_hours": 54.0,
-    "persistence_category": "medium",
-    "target_tissue": "liver",
-    "codon_optimization": "balanced",
-}
+*Archived 2026-10-16 as part of the CANCER-SEEK consolidation into `rollroyces/deepcatch` v2.3.0.*
 
-obs = couple_cfrna_to_cdm(
-    prediction=prediction,
-    observed_cfRNA_concentration_pg_ml=200.0,
-    sampling_time_post_dose_hours=24.0,
-    dose_cfRNA_at_t0_pg_ml=1000.0,
-)
+## License
 
-print(obs.dosing_recommendation)  # "increase" / "maintain" / "decrease" / "escalate" / "hold"
-print(obs.anomaly_flag)            # True / False
-```
-
-## Honest disclosure
-
-- The v0.10.0 anomaly thresholds (`ANOMALY_RATIO_LOW = 0.5`,
-  `ANOMALY_RATIO_HIGH = 2.0`) are **research-use defaults**. They
-  will need clinical calibration before any production use.
-- The dosing-recommendation rules are heuristic. They are NOT a
-  substitute for clinician judgment.
-- No patient data has been processed by this code path.
-- No numerical anchor in this project is fabricated — every
-  quantitative input comes from the upstream mrnavax-rare
-  `cfrna_persistence_classifier` or is a research-use structural
-  default.
-
-## Tests
-
-```bash
-cd deepcatch-methylation
-python3 -m pytest tests/
-```
-
-## Sister repos
-
-- [mrnavax-rare](https://github.com/rollroyces/mrnavax-rare) — mRNA therapeutics design toolkit (v0.10.0 ships the upstream cfRNA persistence classifier).
-- [deepcatch](https://github.com/rollroyces/deepcatch) — fragmentomics + multimodal cfDNA cancer detection.
+This project is licensed under the MIT License — see the [`LICENSE`](LICENSE) file
+in this repository (added 2026-10-16 as part of the consolidation).
